@@ -41,43 +41,90 @@
     ]
   },
   "candidate_rule": {
-    "guaranteed_reception_distance_m": 1000.0,
-    "operational_design_distance_m": 999.0,
-    "reception_safety_margin_m": 1.0,
-    "primary_objective": "maximize sampled worst-case acute intersection angle",
-    "tie_breaker": "minimize travel distance",
-    "coarse_grid_size": 181,
-    "local_refinement_grid_sizes": [
-      81,
+    "conditional_reception_rule": "d2(G) <= max(1000, d1(G))",
+    "continuous_reception_audit": true,
+    "reception_safety_margin_m": 0.5,
+    "primary_objective": "minimize sampled worst posterior diameter",
+    "secondary_rule": "minimum travel distance within the 10% near-optimal set",
+    "posterior_grid_sizes": [
+      21,
+      41,
       61
     ],
-    "dense_angle_audit_source_count": 14001
+    "posterior_source_sampling": {
+      "edge_subdivisions": 6,
+      "radial_levels": 4,
+      "measurement_errors_deg": [
+        -1.0,
+        -0.5,
+        0.0,
+        0.5,
+        1.0
+      ]
+    },
+    "disclaimer": "posterior optimum is deterministic-grid approximate, not a continuous global bound"
   },
-  "positive_candidate": {
+  "posterior_grid_optimum": {
     "point": {
-      "x": 253.24554852855954,
-      "y": 970.2212556829576
+      "x": 993.4768069761914,
+      "y": 41.30476970510148
     },
     "guaranteed_visible": true,
-    "maximum_source_distance_m": 998.9944171355133,
-    "minimum_intersection_angle_deg": 39.553076642556356,
-    "travel_distance_m": 1002.7275765772805,
-    "travel_time_s": 200.5455153154561
+    "maximum_source_distance_m": 990.1752725914585,
+    "minimum_intersection_angle_deg": 31.77094081308853,
+    "conditional_reception_margin_m": 9.824727408541548,
+    "travel_distance_m": 994.3350793369407,
+    "travel_time_s": 198.86701586738815,
+    "sampled_worst_diameter_m": 112.59371383127684,
+    "symmetric_alternative_point": {
+      "x": 378.6028672078701,
+      "y": 919.4357611829007
+    }
   },
-  "negative_candidate": {
+  "recommended_near_optimal_candidate": {
     "point": {
-      "x": 998.1301726574579,
-      "y": -93.82361523586803
+      "x": 277.06327613906626,
+      "y": 889.2329228133017
     },
     "guaranteed_visible": true,
-    "maximum_source_distance_m": 998.9986524352788,
-    "minimum_intersection_angle_deg": 39.55195178568544,
-    "travel_distance_m": 1002.5301553295716,
-    "travel_time_s": 200.50603106591433
+    "maximum_source_distance_m": 967.8085721914832,
+    "minimum_intersection_angle_deg": 36.46223196035205,
+    "conditional_reception_margin_m": 72.50080111012619,
+    "travel_distance_m": 931.3963978886754,
+    "travel_time_s": 186.27927957773508,
+    "sampled_worst_diameter_m": 123.39749352324431,
+    "near_optimal_threshold_m": 123.85308521440454,
+    "symmetric_alternative_point": {
+      "x": 930.3668371429076,
+      "y": -43.78125563185972
+    }
   },
-  "dense_angle_audit": {
-    "positive_minimum_angle_deg": 39.553076642556356,
-    "negative_minimum_angle_deg": 39.55195178568544
+  "near_optimal_grid_point_count": 52,
+  "fixed_1000m_angle_baseline": {
+    "positive_candidate": {
+      "point": {
+        "x": 256.2311709348843,
+        "y": 965.4253616480657
+      },
+      "guaranteed_visible": true,
+      "maximum_source_distance_m": 995.4133336382178,
+      "minimum_intersection_angle_deg": 39.31768500080378,
+      "conditional_reception_margin_m": null,
+      "travel_distance_m": 998.8496092365259,
+      "travel_time_s": 199.76992184730517
+    },
+    "negative_candidate": {
+      "point": {
+        "x": 966.0206486649091,
+        "y": -80.95151869200213
+      },
+      "guaranteed_visible": true,
+      "maximum_source_distance_m": 993.9386316458174,
+      "minimum_intersection_angle_deg": 38.976015562269716,
+      "conditional_reception_margin_m": null,
+      "travel_distance_m": 969.4065411505708,
+      "travel_time_s": 193.88130823011414
+    }
   },
   "centerline_baseline": {
     "point": {
@@ -87,20 +134,21 @@
     "guaranteed_visible": true,
     "maximum_source_distance_m": 747.6161545850686,
     "minimum_intersection_angle_deg": 8.686654966260191e-14,
+    "conditional_reception_margin_m": null,
     "travel_distance_m": 752.6138652708217,
     "travel_time_s": 150.52277305416436
   },
   "sampled_worst_posterior": {
     "source_sample_count": 601,
     "measurement_error_grid_count": 21,
-    "selected_candidate_diameter_m": 113.02121726314886,
+    "selected_candidate_diameter_m": 123.39749352324431,
     "selected_worst_source": {
       "x": 1243.5563588325624,
       "y": 838.7893552061203
     },
     "selected_worst_measurement_error_deg": -1.0,
     "centerline_baseline_diameter_m": 747.616154585073,
-    "relative_reduction": 0.848824538407847
+    "relative_reduction": 0.8349453890656898
   },
   "representative_source": {
     "point": {
@@ -109,67 +157,57 @@
     },
     "distance_from_first_station_m": 900.0,
     "worst_tested_second_measurement_error_deg": 1.0,
-    "posterior_diameter_m": 44.525893545165275,
+    "posterior_diameter_m": 44.73820237616186,
     "posterior_minimum_enclosing_circle": {
       "center": {
-        "x": 747.4515536670044,
-        "y": 523.0396800713952
+        "x": 746.613216727941,
+        "y": 522.4490553061028
       },
-      "radius_m": 22.262946772582637
+      "radius_m": 22.36910118808093
     }
   },
   "grid_convergence": [
     {
+      "grid_size": 21,
+      "evaluated_feasible_count": 115,
+      "optimum_point": {
+        "x": 172.76244018434483,
+        "y": 979.7844861302667
+      },
+      "optimum_sampled_worst_diameter_m": 116.68829633474101,
+      "recommended_point": {
+        "x": 230.40687203762496,
+        "y": 897.4597056792229
+      },
+      "recommended_sampled_worst_diameter_m": 124.72372035912063
+    },
+    {
+      "grid_size": 41,
+      "evaluated_feasible_count": 475,
+      "optimum_point": {
+        "x": 411.5384745674706,
+        "y": 901.6015730080994
+      },
+      "optimum_sampled_worst_diameter_m": 113.5380881992588,
+      "recommended_point": {
+        "x": 230.40687203762496,
+        "y": 897.4597056792229
+      },
+      "recommended_sampled_worst_diameter_m": 124.72372035912063
+    },
+    {
       "grid_size": 61,
-      "positive_point": {
-        "x": 256.2311709348843,
-        "y": 965.4253616480657
+      "evaluated_feasible_count": 1079,
+      "optimum_point": {
+        "x": 993.4768069761914,
+        "y": 41.30476970510148
       },
-      "positive_minimum_angle_deg": 39.31768500080378,
-      "negative_point": {
-        "x": 966.0206486649091,
-        "y": -80.95151869200213
+      "optimum_sampled_worst_diameter_m": 112.59371383127684,
+      "recommended_point": {
+        "x": 277.06327613906626,
+        "y": 889.2329228133017
       },
-      "negative_minimum_angle_deg": 38.976015562269716
-    },
-    {
-      "grid_size": 101,
-      "positive_point": {
-        "x": 251.16124609395553,
-        "y": 957.9512410742079
-      },
-      "positive_minimum_angle_deg": 39.49251086396043,
-      "negative_point": {
-        "x": 966.0206486649091,
-        "y": -84.68857897893093
-      },
-      "negative_minimum_angle_deg": 39.19687000856556
-    },
-    {
-      "grid_size": 141,
-      "positive_point": {
-        "x": 254.42048349169545,
-        "y": 970.7640192008209
-      },
-      "positive_minimum_angle_deg": 39.49562692750003,
-      "negative_point": {
-        "x": 998.6130226423082,
-        "y": -94.29816257389075
-      },
-      "negative_minimum_angle_deg": 39.576356840765
-    },
-    {
-      "grid_size": 181,
-      "positive_point": {
-        "x": 252.00623356744364,
-        "y": 965.4253616480655
-      },
-      "positive_minimum_angle_deg": 39.553286047382805,
-      "negative_point": {
-        "x": 995.5952102369936,
-        "y": -93.40838631509817
-      },
-      "negative_minimum_angle_deg": 39.54228687229127
+      "recommended_sampled_worst_diameter_m": 123.39749352324431
     }
   ]
 }

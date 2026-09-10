@@ -1,14 +1,11 @@
 """Robust second-station selection for CUMCM 2026 Problem B, Question 2.
 
-The first bearing and the known target/reception limits define a convex source
-set K1.  A second station is guaranteed to receive the omnidirectional source
-when it lies within 1000 m of every point of K1.  For the polygonal outer
-approximation used here, it is sufficient and necessary to check all vertices.
-
-Among guaranteed-visible candidates, the strategy maximizes the worst acute
-intersection angle over a deterministic sample of K1.  Movement distance is a
-tie-breaker.  The two sides of the first bearing are retained as alternative
-candidates so later routing constraints can choose between them.
+The first successful bearing updates the lower bound of the unknown reception
+radius from 1000 m to ``max(1000 m, distance(source, first_station))``.  The
+module therefore supports both the original fixed-1000 m baseline and the
+conditional reception model.  Final candidates are ranked by the sampled
+worst posterior-region diameter; intersection angle is retained as a useful
+diagnostic rather than used as the final objective.
 """
 
 from __future__ import annotations
@@ -38,6 +35,7 @@ class CandidateEvaluation:
     maximum_source_distance_m: float
     minimum_intersection_angle_deg: float
     travel_distance_m: float
+    reception_margin_m: float = float("nan")
 
 
 @dataclass(frozen=True)
@@ -57,6 +55,33 @@ class PosteriorEvaluation:
     worst_source: Point
     worst_measurement_error_deg: float
     worst_polygon: tuple[Point, ...]
+
+
+@dataclass(frozen=True)
+class ConditionalReceptionEvaluation:
+    """Continuous reception audit over a convex polygonal source region."""
+
+    guaranteed_visible: bool
+    minimum_margin_m: float
+    worst_source: Point
+    maximum_source_distance_m: float
+
+
+@dataclass(frozen=True)
+class PosteriorGrid:
+    """Posterior-loss search result on a deterministic Cartesian grid."""
+
+    along_values_m: np.ndarray
+    lateral_values_m: np.ndarray
+    losses_m: np.ndarray
+    feasible_mask: np.ndarray
+    near_optimal_mask: np.ndarray
+    optimum: CandidateEvaluation
+    recommended: CandidateEvaluation
+    optimum_posterior: PosteriorEvaluation
+    recommended_posterior: PosteriorEvaluation
+    near_optimal_threshold_m: float
+    evaluated_count: int
 
 
 def _unit(angle_deg: float) -> Point:
@@ -197,6 +222,139 @@ def maximum_distance_to_region_vertices(
     """Maximum candidate-to-source distance over a convex polygon."""
 
     return max(candidate.distance_to(vertex) for vertex in vertices)
+
+
+def _inside_convex_polygon(
+    point: Point,
+    vertices: Sequence[Point],
+    tol: float = 1e-7,
+) -> bool:
+    """Return whether ``point`` lies in or on a consistently ordered polygon."""
+
+    polygon = tuple(vertices)
+    if len(polygon) < 3:
+        return any(point.distance_to(vertex) <= tol for vertex in polygon)
+    signs = []
+    for start, end in zip(polygon, polygon[1:] + polygon[:1]):
+        cross = (end.x - start.x) * (point.y - start.y) - (
+            end.y - start.y
+        ) * (point.x - start.x)
+        if abs(cross) > tol:
+            signs.append(cross > 0.0)
+    return not signs or all(sign == signs[0] for sign in signs)
+
+
+def _polygon_circle_boundary_points(
+    vertices: Sequence[Point],
+    center: Point,
+    radius_m: float,
+    tol: float = 1e-9,
+) -> tuple[Point, ...]:
+    """Return polygon vertices and all edge intersections with a circle."""
+
+    polygon = tuple(vertices)
+    points = list(polygon)
+    for start, end in zip(polygon, polygon[1:] + polygon[:1]):
+        dx, dy = end.x - start.x, end.y - start.y
+        ox, oy = start.x - center.x, start.y - center.y
+        qa = dx * dx + dy * dy
+        qb = 2.0 * (ox * dx + oy * dy)
+        qc = ox * ox + oy * oy - radius_m * radius_m
+        discriminant = qb * qb - 4.0 * qa * qc
+        if qa <= tol or discriminant < -tol:
+            continue
+        root = max(0.0, discriminant) ** 0.5
+        for fraction in ((-qb - root) / (2.0 * qa), (-qb + root) / (2.0 * qa)):
+            if -tol <= fraction <= 1.0 + tol:
+                clipped = min(1.0, max(0.0, fraction))
+                point = Point(start.x + clipped * dx, start.y + clipped * dy)
+                if not any(point.distance_to(existing) <= 1e-7 for existing in points):
+                    points.append(point)
+    return tuple(points)
+
+
+def conditional_reception_evaluation(
+    candidate: Point,
+    first_station: Point,
+    region_vertices: Sequence[Point],
+    prior_lower_radius_m: float = 1000.0,
+    safety_margin_m: float = 0.0,
+) -> ConditionalReceptionEvaluation:
+    """Audit the conditional reception guarantee without source sampling.
+
+    Inside the prior-radius disk, the maximum distance to ``candidate`` occurs
+    at a polygon vertex, a polygon/circle intersection, or the circle point
+    opposite the candidate.  Outside that disk, the squared-distance condition
+    is affine in the source coordinate, so the same finite set contains its
+    worst point.  Consequently this check is continuous over the polygon, not
+    merely a dense point-sample audit.
+    """
+
+    if prior_lower_radius_m <= 0.0:
+        raise ValueError("prior_lower_radius_m must be positive.")
+    if not region_vertices:
+        raise ValueError("region_vertices must not be empty.")
+
+    boundary = list(
+        _polygon_circle_boundary_points(
+            region_vertices, first_station, prior_lower_radius_m
+        )
+    )
+    qx = candidate.x - first_station.x
+    qy = candidate.y - first_station.y
+    qnorm = (qx * qx + qy * qy) ** 0.5
+    if qnorm > 1e-12:
+        antipode = Point(
+            first_station.x - prior_lower_radius_m * qx / qnorm,
+            first_station.y - prior_lower_radius_m * qy / qnorm,
+        )
+        if _inside_convex_polygon(antipode, region_vertices):
+            boundary.append(antipode)
+
+    near_points = [
+        point
+        for point in boundary
+        if point.distance_to(first_station) <= prior_lower_radius_m + 1e-7
+    ]
+    far_points = [
+        point
+        for point in boundary
+        if point.distance_to(first_station) >= prior_lower_radius_m - 1e-7
+    ]
+    near_audits = [
+        (prior_lower_radius_m - candidate.distance_to(source), source)
+        for source in near_points
+    ]
+    far_squared_audits = [
+        (
+            source.distance_to(first_station) ** 2
+            - candidate.distance_to(source) ** 2,
+            source,
+        )
+        for source in far_points
+    ]
+    if not near_audits and not far_squared_audits:
+        raise RuntimeError("Reception audit recovered no boundary points.")
+    margin_audits = list(near_audits)
+    if far_squared_audits:
+        squared_slack, far_worst = min(far_squared_audits, key=lambda item: item[0])
+        maximum_first_distance = max(
+            source.distance_to(first_station) for source in far_points
+        )
+        # Since d2 <= d1 whenever the squared slack is non-negative,
+        # d1+d2 <= 2*max(d1).  This converts affine squared slack into a
+        # conservative continuous lower bound on the distance margin.
+        far_margin_lower_bound = squared_slack / (2.0 * maximum_first_distance)
+        margin_audits.append((far_margin_lower_bound, far_worst))
+    minimum_margin, worst_source = min(margin_audits, key=lambda item: item[0])
+    return ConditionalReceptionEvaluation(
+        guaranteed_visible=minimum_margin >= safety_margin_m - 1e-7,
+        minimum_margin_m=minimum_margin,
+        worst_source=worst_source,
+        maximum_source_distance_m=maximum_distance_to_region_vertices(
+            candidate, region_vertices
+        ),
+    )
 
 
 def minimum_intersection_angle(
@@ -486,6 +644,117 @@ def worst_posterior_diameter(
     if worst is None:
         raise ValueError("source_samples must not be empty.")
     return worst
+
+
+def search_posterior_optimal_candidates(
+    first_observation: Observation,
+    first_region: Sequence[Point],
+    grid_size: int = 31,
+    source_edge_subdivisions: int = 6,
+    source_radial_levels: int = 4,
+    measurement_errors_deg: Sequence[float] = (-1.0, -0.5, 0.0, 0.5, 1.0),
+    prior_lower_radius_m: float = 1000.0,
+    reception_safety_margin_m: float = 0.5,
+    near_optimal_fraction: float = 0.10,
+) -> PosteriorGrid:
+    """Search the conditional reception domain using posterior diameter.
+
+    The grid covers every conditionally feasible station because source points
+    arbitrarily close to the first station force the second station to lie no
+    farther than approximately the prior lower reception radius.  The returned
+    optimum is a deterministic-grid result, not a claim of continuous global
+    optimality.  Within the 10% (configurable) near-optimal set, travel distance
+    from the first station is the secondary criterion.
+    """
+
+    if grid_size < 11:
+        raise ValueError("grid_size must be at least 11.")
+    if near_optimal_fraction < 0.0:
+        raise ValueError("near_optimal_fraction must be non-negative.")
+    samples = sample_convex_polygon(
+        first_region,
+        edge_subdivisions=source_edge_subdivisions,
+        radial_levels=source_radial_levels,
+    )
+    halfwidth = prior_lower_radius_m + 5.0
+    along_values = np.linspace(-halfwidth, halfwidth, grid_size)
+    lateral_values = np.linspace(-halfwidth, halfwidth, grid_size)
+    direction = _unit(first_observation.bearing_deg)
+    normal = Point(-direction.y, direction.x)
+    losses = np.full((grid_size, grid_size), np.nan, dtype=float)
+    feasible = np.zeros((grid_size, grid_size), dtype=bool)
+    evaluations: dict[tuple[int, int], tuple[CandidateEvaluation, PosteriorEvaluation]] = {}
+
+    for row, lateral in enumerate(lateral_values):
+        for column, along in enumerate(along_values):
+            point = Point(
+                first_observation.station.x
+                + float(along) * direction.x
+                + float(lateral) * normal.x,
+                first_observation.station.y
+                + float(along) * direction.y
+                + float(lateral) * normal.y,
+            )
+            reception = conditional_reception_evaluation(
+                point,
+                first_observation.station,
+                first_region,
+                prior_lower_radius_m=prior_lower_radius_m,
+                safety_margin_m=reception_safety_margin_m,
+            )
+            if not reception.guaranteed_visible:
+                continue
+            posterior = worst_posterior_diameter(
+                first_region,
+                point,
+                samples,
+                measurement_errors_deg=measurement_errors_deg,
+            )
+            candidate = CandidateEvaluation(
+                point=point,
+                guaranteed_visible=True,
+                maximum_source_distance_m=reception.maximum_source_distance_m,
+                minimum_intersection_angle_deg=minimum_intersection_angle(
+                    point, first_observation.station, samples
+                ),
+                travel_distance_m=point.distance_to(first_observation.station),
+                reception_margin_m=reception.minimum_margin_m,
+            )
+            feasible[row, column] = True
+            losses[row, column] = posterior.worst_diameter_m
+            evaluations[(row, column)] = (candidate, posterior)
+
+    if not evaluations:
+        raise RuntimeError("The posterior grid found no conditionally feasible point.")
+    optimum_index = min(evaluations, key=lambda index: losses[index])
+    optimum_loss = float(losses[optimum_index])
+    threshold = (1.0 + near_optimal_fraction) * optimum_loss
+    near_optimal = feasible & (losses <= threshold + 1e-9)
+    near_indices = [index for index in evaluations if near_optimal[index]]
+    recommended_index = min(
+        near_indices,
+        key=lambda index: (
+            evaluations[index][0].travel_distance_m,
+            losses[index],
+            evaluations[index][0].point.x,
+            evaluations[index][0].point.y,
+        ),
+    )
+    optimum, optimum_posterior = evaluations[optimum_index]
+    recommended, recommended_posterior = evaluations[recommended_index]
+    return PosteriorGrid(
+        along_values_m=along_values,
+        lateral_values_m=lateral_values,
+        losses_m=losses,
+        feasible_mask=feasible,
+        near_optimal_mask=near_optimal,
+        optimum=optimum,
+        recommended=recommended,
+        optimum_posterior=optimum_posterior,
+        recommended_posterior=recommended_posterior,
+        near_optimal_threshold_m=threshold,
+        evaluated_count=len(evaluations),
+    )
 
 
 def representative_posterior(

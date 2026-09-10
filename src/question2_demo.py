@@ -20,16 +20,21 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Circle as CirclePatch
 from matplotlib.patches import Polygon
 
-from plot_style import PALETTE, add_panel_label, apply_publication_style
+from plot_style import (
+    PALETTE,
+    add_panel_label,
+    apply_publication_style,
+    save_publication_figure,
+    style_axis,
+)
 from question1_geometry import Observation, Point, polygon_diameter
 from question2_strategy import (
     CandidateEvaluation,
     centerline_baseline,
     first_source_region,
-    minimum_intersection_angle,
-    refine_candidate,
     representative_posterior,
     sample_convex_polygon,
+    search_posterior_optimal_candidates,
     search_second_station_candidates,
     worst_posterior_diameter,
 )
@@ -47,6 +52,11 @@ def _candidate_payload(candidate: CandidateEvaluation) -> dict:
         "guaranteed_visible": candidate.guaranteed_visible,
         "maximum_source_distance_m": candidate.maximum_source_distance_m,
         "minimum_intersection_angle_deg": candidate.minimum_intersection_angle_deg,
+        "conditional_reception_margin_m": (
+            candidate.reception_margin_m
+            if np.isfinite(candidate.reception_margin_m)
+            else None
+        ),
         "travel_distance_m": candidate.travel_distance_m,
         "travel_time_s": candidate.travel_distance_m / 5.0,
     }
@@ -64,9 +74,49 @@ def _polygon_patch(vertices, facecolor, edgecolor, alpha, label, linewidth=1.8):
     )
 
 
+def _local_basis(bearing_deg: float) -> tuple[np.ndarray, np.ndarray]:
+    """Return along-bearing and left-normal unit vectors."""
+
+    angle = np.deg2rad(bearing_deg)
+    along = np.array([np.cos(angle), np.sin(angle)])
+    normal = np.array([-np.sin(angle), np.cos(angle)])
+    return along, normal
+
+
+def _point_to_local(point: Point, origin: Point, along, normal) -> tuple[float, float]:
+    displacement = np.array([point.x - origin.x, point.y - origin.y])
+    return float(displacement @ along), float(displacement @ normal)
+
+
+def _points_to_local(points, origin: Point, along, normal) -> np.ndarray:
+    return np.asarray(
+        [_point_to_local(point, origin, along, normal) for point in points],
+        dtype=float,
+    )
+
+
+def _mirror_candidate(
+    candidate: CandidateEvaluation,
+    origin: Point,
+    along: np.ndarray,
+    normal: np.ndarray,
+) -> CandidateEvaluation:
+    """Reflect a candidate across the first measured bearing line."""
+
+    local_along, local_lateral = _point_to_local(candidate.point, origin, along, normal)
+    reflected = np.array([origin.x, origin.y]) + local_along * along - local_lateral * normal
+    return CandidateEvaluation(
+        point=Point(float(reflected[0]), float(reflected[1])),
+        guaranteed_visible=candidate.guaranteed_visible,
+        maximum_source_distance_m=candidate.maximum_source_distance_m,
+        minimum_intersection_angle_deg=candidate.minimum_intersection_angle_deg,
+        travel_distance_m=candidate.travel_distance_m,
+        reception_margin_m=candidate.reception_margin_m,
+    )
+
+
 def main() -> None:
     apply_publication_style()
-    operational_reception_m = 999.0
     first_observation = Observation(Point(0.0, 0.0), 35.0)
     first_region = first_source_region(first_observation, circle_sides=180)
     first_diameter, _ = polygon_diameter(first_region)
@@ -74,96 +124,65 @@ def main() -> None:
         first_region, edge_subdivisions=10, radial_levels=5
     )
 
+    # Retain the fixed-1000 m / angle-maximization solution only as a baseline.
+    fixed_grid = search_second_station_candidates(
+        first_observation,
+        first_region,
+        grid_size=61,
+        edge_subdivisions=10,
+        radial_levels=5,
+    )
+    fixed_positive = fixed_grid.positive_candidate
+    fixed_negative = fixed_grid.negative_candidate
+    baseline = centerline_baseline(
+        first_observation, first_region, source_samples
+    )
+
     convergence = []
-    final_grid = None
-    for grid_size in (61, 101, 141, 181):
-        grid = search_second_station_candidates(
+    posterior_search = None
+    for grid_size in (21, 41, 61):
+        posterior_search = search_posterior_optimal_candidates(
             first_observation,
             first_region,
             grid_size=grid_size,
-            edge_subdivisions=10,
-            radial_levels=5,
+            source_edge_subdivisions=6,
+            source_radial_levels=4,
+            measurement_errors_deg=(-1.0, -0.5, 0.0, 0.5, 1.0),
+            reception_safety_margin_m=0.5,
+            near_optimal_fraction=0.10,
         )
         convergence.append(
             {
                 "grid_size": grid_size,
-                "positive_point": asdict(grid.positive_candidate.point),
-                "positive_minimum_angle_deg": grid.positive_candidate.minimum_intersection_angle_deg,
-                "negative_point": asdict(grid.negative_candidate.point),
-                "negative_minimum_angle_deg": grid.negative_candidate.minimum_intersection_angle_deg,
+                "evaluated_feasible_count": posterior_search.evaluated_count,
+                "optimum_point": asdict(posterior_search.optimum.point),
+                "optimum_sampled_worst_diameter_m": (
+                    posterior_search.optimum_posterior.worst_diameter_m
+                ),
+                "recommended_point": asdict(posterior_search.recommended.point),
+                "recommended_sampled_worst_diameter_m": (
+                    posterior_search.recommended_posterior.worst_diameter_m
+                ),
             }
         )
-        final_grid = grid
-    assert final_grid is not None
-
-    coarse_dx = float(final_grid.x_values[1] - final_grid.x_values[0])
-    coarse_dy = float(final_grid.y_values[1] - final_grid.y_values[0])
-    positive = refine_candidate(
-        final_grid.positive_candidate,
-        first_observation,
-        first_region,
-        side=1,
-        x_halfwidth_m=2.0 * coarse_dx,
-        y_halfwidth_m=2.0 * coarse_dy,
-        grid_size=81,
-        guaranteed_reception_m=operational_reception_m,
+    assert posterior_search is not None
+    optimum = posterior_search.optimum
+    selected = posterior_search.recommended
+    along, normal = _local_basis(first_observation.bearing_deg)
+    optimum_mirror = _mirror_candidate(
+        optimum, first_observation.station, along, normal
     )
-    negative = refine_candidate(
-        final_grid.negative_candidate,
-        first_observation,
-        first_region,
-        side=-1,
-        x_halfwidth_m=2.0 * coarse_dx,
-        y_halfwidth_m=2.0 * coarse_dy,
-        grid_size=81,
-        guaranteed_reception_m=operational_reception_m,
-    )
-    local_dx = 4.0 * coarse_dx / 80.0
-    local_dy = 4.0 * coarse_dy / 80.0
-    positive = refine_candidate(
-        positive,
-        first_observation,
-        first_region,
-        side=1,
-        x_halfwidth_m=2.0 * local_dx,
-        y_halfwidth_m=2.0 * local_dy,
-        grid_size=61,
-        edge_subdivisions=60,
-        radial_levels=11,
-        guaranteed_reception_m=operational_reception_m,
-    )
-    negative = refine_candidate(
-        negative,
-        first_observation,
-        first_region,
-        side=-1,
-        x_halfwidth_m=2.0 * local_dx,
-        y_halfwidth_m=2.0 * local_dy,
-        grid_size=61,
-        edge_subdivisions=60,
-        radial_levels=11,
-        guaranteed_reception_m=operational_reception_m,
-    )
-    dense_audit_samples = sample_convex_polygon(
-        first_region, edge_subdivisions=200, radial_levels=15
-    )
-    positive_dense_score = minimum_intersection_angle(
-        positive.point, first_observation.station, dense_audit_samples
-    )
-    negative_dense_score = minimum_intersection_angle(
-        negative.point, first_observation.station, dense_audit_samples
-    )
-    baseline = centerline_baseline(
-        first_observation, first_region, source_samples
+    selected_mirror = _mirror_candidate(
+        selected, first_observation.station, along, normal
     )
 
     posterior_samples = sample_convex_polygon(
         first_region, edge_subdivisions=20, radial_levels=7
     )
     posterior_error_grid = tuple(np.linspace(-1.0, 1.0, 21))
-    positive_worst = worst_posterior_diameter(
+    selected_worst = worst_posterior_diameter(
         first_region,
-        positive.point,
+        selected.point,
         posterior_samples,
         measurement_errors_deg=posterior_error_grid,
     )
@@ -183,7 +202,7 @@ def main() -> None:
     ) = representative_posterior(
         first_observation,
         first_region,
-        positive.point,
+        selected.point,
         source_distance_m=900.0,
         measurement_errors_deg=tuple(np.linspace(-1.0, 1.0, 41)),
     )
@@ -207,31 +226,45 @@ def main() -> None:
             "vertices": [asdict(point) for point in first_region],
         },
         "candidate_rule": {
-            "guaranteed_reception_distance_m": 1000.0,
-            "operational_design_distance_m": operational_reception_m,
-            "reception_safety_margin_m": 1000.0 - operational_reception_m,
-            "primary_objective": "maximize sampled worst-case acute intersection angle",
-            "tie_breaker": "minimize travel distance",
-            "coarse_grid_size": 181,
-            "local_refinement_grid_sizes": [81, 61],
-            "dense_angle_audit_source_count": len(dense_audit_samples),
+            "conditional_reception_rule": "d2(G) <= max(1000, d1(G))",
+            "continuous_reception_audit": True,
+            "reception_safety_margin_m": 0.5,
+            "primary_objective": "minimize sampled worst posterior diameter",
+            "secondary_rule": "minimum travel distance within the 10% near-optimal set",
+            "posterior_grid_sizes": [21, 41, 61],
+            "posterior_source_sampling": {
+                "edge_subdivisions": 6,
+                "radial_levels": 4,
+                "measurement_errors_deg": [-1.0, -0.5, 0.0, 0.5, 1.0],
+            },
+            "disclaimer": "posterior optimum is deterministic-grid approximate, not a continuous global bound",
         },
-        "positive_candidate": _candidate_payload(positive),
-        "negative_candidate": _candidate_payload(negative),
-        "dense_angle_audit": {
-            "positive_minimum_angle_deg": positive_dense_score,
-            "negative_minimum_angle_deg": negative_dense_score,
+        "posterior_grid_optimum": {
+            **_candidate_payload(optimum),
+            "sampled_worst_diameter_m": posterior_search.optimum_posterior.worst_diameter_m,
+            "symmetric_alternative_point": asdict(optimum_mirror.point),
+        },
+        "recommended_near_optimal_candidate": {
+            **_candidate_payload(selected),
+            "sampled_worst_diameter_m": posterior_search.recommended_posterior.worst_diameter_m,
+            "near_optimal_threshold_m": posterior_search.near_optimal_threshold_m,
+            "symmetric_alternative_point": asdict(selected_mirror.point),
+        },
+        "near_optimal_grid_point_count": int(np.count_nonzero(posterior_search.near_optimal_mask)),
+        "fixed_1000m_angle_baseline": {
+            "positive_candidate": _candidate_payload(fixed_positive),
+            "negative_candidate": _candidate_payload(fixed_negative),
         },
         "centerline_baseline": _candidate_payload(baseline),
         "sampled_worst_posterior": {
             "source_sample_count": len(posterior_samples),
             "measurement_error_grid_count": len(posterior_error_grid),
-            "selected_candidate_diameter_m": positive_worst.worst_diameter_m,
-            "selected_worst_source": asdict(positive_worst.worst_source),
-            "selected_worst_measurement_error_deg": positive_worst.worst_measurement_error_deg,
+            "selected_candidate_diameter_m": selected_worst.worst_diameter_m,
+            "selected_worst_source": asdict(selected_worst.worst_source),
+            "selected_worst_measurement_error_deg": selected_worst.worst_measurement_error_deg,
             "centerline_baseline_diameter_m": baseline_worst.worst_diameter_m,
             "relative_reduction": 1.0
-            - positive_worst.worst_diameter_m / baseline_worst.worst_diameter_m,
+            - selected_worst.worst_diameter_m / baseline_worst.worst_diameter_m,
         },
         "representative_source": {
             "point": asdict(representative_source),
@@ -248,10 +281,22 @@ def main() -> None:
     RESULT_PATH.parent.mkdir(parents=True, exist_ok=True)
     RESULT_PATH.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    direction_angle = np.deg2rad(first_observation.bearing_deg)
-    direction = np.array([np.cos(direction_angle), np.sin(direction_angle)])
-    grid_x, grid_y = np.meshgrid(final_grid.x_values, final_grid.y_values)
-    masked_scores = np.ma.masked_invalid(final_grid.angle_scores_deg)
+    direction, normal = along, normal
+    grid_along, grid_lateral = np.meshgrid(
+        posterior_search.along_values_m,
+        posterior_search.lateral_values_m,
+    )
+    grid_x = (
+        first_observation.station.x
+        + grid_along * direction[0]
+        + grid_lateral * normal[0]
+    )
+    grid_y = (
+        first_observation.station.y
+        + grid_along * direction[1]
+        + grid_lateral * normal[1]
+    )
+    masked_scores = np.ma.masked_invalid(posterior_search.losses_m)
     candidate_cmap = LinearSegmentedColormap.from_list(
         "candidate_quality",
         [PALETTE["pale_yellow"], PALETTE["coral"], PALETTE["teal"]],
@@ -306,6 +351,7 @@ def main() -> None:
     axis.set_xlabel("East x (m)")
     axis.set_ylabel("North y (m)")
     axis.set_title("First-observation uncertainty")
+    style_axis(axis)
     axis.legend(loc="lower right", fontsize=8)
     add_panel_label(axis, "A")
 
@@ -323,10 +369,18 @@ def main() -> None:
     axis.contour(
         grid_x,
         grid_y,
-        final_grid.feasible_mask.astype(float),
+        posterior_search.feasible_mask.astype(float),
         levels=[0.5],
         colors=[PALETTE["ink"]],
         linewidths=1.0,
+    )
+    axis.contour(
+        grid_x,
+        grid_y,
+        posterior_search.near_optimal_mask.astype(float),
+        levels=[0.5],
+        colors=[PALETTE["red"]],
+        linewidths=1.8,
     )
     axis.add_patch(
         _polygon_patch(
@@ -339,15 +393,25 @@ def main() -> None:
         )
     )
     axis.scatter(
-        [positive.point.x, negative.point.x],
-        [positive.point.y, negative.point.y],
+        [
+            optimum.point.x,
+            optimum_mirror.point.x,
+            selected.point.x,
+            selected_mirror.point.x,
+        ],
+        [
+            optimum.point.y,
+            optimum_mirror.point.y,
+            selected.point.y,
+            selected_mirror.point.y,
+        ],
         marker="*",
         s=190,
         color=PALETTE["red"],
         edgecolor=PALETTE["ink"],
         linewidth=0.7,
         zorder=6,
-        label="Recommended candidates",
+        label="Grid optimum / travel-selected",
     )
     axis.scatter(
         [baseline.point.x],
@@ -373,13 +437,13 @@ def main() -> None:
     axis.set_xlabel("East x (m)")
     axis.set_ylabel("North y (m)")
     axis.set_title("Guaranteed-visible candidate region")
+    style_axis(axis)
     axis.legend(loc="lower left", fontsize=8)
     add_panel_label(axis, "B")
     colorbar = figure.colorbar(quality, ax=axis, fraction=0.046, pad=0.03)
-    colorbar.set_label("Worst sampled intersection angle (degrees)")
+    colorbar.set_label("Worst sampled posterior diameter (m)")
     figure.suptitle("Question 2 robust second-station selection", fontsize=15)
-    CANDIDATE_FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    figure.savefig(CANDIDATE_FIGURE_PATH, dpi=240)
+    save_publication_figure(figure, CANDIDATE_FIGURE_PATH)
     plt.close(figure)
 
     posterior_figure, posterior_axes = plt.subplots(
@@ -403,15 +467,15 @@ def main() -> None:
         linewidth=1.0,
     )
     axis.plot(
-        [positive.point.x, representative_source.x],
-        [positive.point.y, representative_source.y],
+        [selected.point.x, representative_source.x],
+        [selected.point.y, representative_source.y],
         color=PALETTE["gray"],
         linestyle="--",
         linewidth=1.0,
     )
     axis.scatter(
-        [first_observation.station.x, positive.point.x],
-        [first_observation.station.y, positive.point.y],
+        [first_observation.station.x, selected.point.x],
+        [first_observation.station.y, selected.point.y],
         s=85,
         color=[PALETTE["coral"], PALETTE["red"]],
         edgecolor=PALETTE["ink"],
@@ -434,6 +498,7 @@ def main() -> None:
     axis.set_xlabel("East x (m)")
     axis.set_ylabel("North y (m)")
     axis.set_title("Before the second observation")
+    style_axis(axis)
     axis.legend(loc="upper left", fontsize=8)
     add_panel_label(axis, "A")
 
@@ -489,10 +554,11 @@ def main() -> None:
     axis.set_title(
         f"After second observation (tested error={representative_error:+.1f}°)"
     )
+    style_axis(axis)
     axis.legend(loc="upper left", fontsize=8)
     add_panel_label(axis, "B")
     posterior_figure.suptitle("Uncertainty reduction by the second station", fontsize=15)
-    posterior_figure.savefig(POSTERIOR_FIGURE_PATH, dpi=240)
+    save_publication_figure(posterior_figure, POSTERIOR_FIGURE_PATH)
     plt.close(posterior_figure)
 
     print(f"Wrote {RESULT_PATH}")
