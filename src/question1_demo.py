@@ -64,6 +64,12 @@ def save_figure_bundle(figure: plt.Figure, png_path: Path) -> list[Path]:
     paths = [png_path, png_path.with_suffix(".pdf"), png_path.with_suffix(".svg")]
     for path in paths:
         figure.savefig(path, dpi=300, bbox_inches="tight", facecolor="white")
+        if path.suffix == ".svg":
+            # Matplotlib emits spaces before many SVG newlines; normalize the
+            # generated text so repository whitespace checks remain useful.
+            svg_text = path.read_text(encoding="utf-8")
+            clean_svg = "\n".join(line.rstrip() for line in svg_text.splitlines()) + "\n"
+            path.write_text(clean_svg, encoding="utf-8", newline="\n")
 
     grayscale_path = png_path.with_name(f"{png_path.stem}_grayscale.png")
     with Image.open(png_path) as image:
