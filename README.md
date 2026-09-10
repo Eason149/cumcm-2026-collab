@@ -59,11 +59,13 @@ paper/             论文源文件及附录
 ## 当前建模成果
 
 - [问题一：交会定位区域直径与覆盖圆判定](paper/问题一_交会定位区域直径与覆盖判定.md)
+- [问题二：第二检测点的鲁棒选址策略](paper/问题二_第二检测点鲁棒选址策略.md)
 
-复现问题一结果：
+复现问题一、二结果：
 
 ```bash
 python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 python src/question1_demo.py
+python src/question2_demo.py
 ```

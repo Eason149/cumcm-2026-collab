@@ -16,6 +16,7 @@ from question1_geometry import (  # noqa: E402
     Observation,
     Point,
     check_diametral_circles,
+    clip_polygon_by_halfplane,
     intersect_halfplanes,
     localization_region,
     minimum_enclosing_circle,
@@ -77,6 +78,18 @@ class Question1GeometryTests(unittest.TestCase):
         diameter, pairs = polygon_diameter(result.vertices)
         self.assertAlmostEqual(diameter, 0.0)
         self.assertEqual(pairs, ((Point(0.0, 0.0), Point(0.0, 0.0)),))
+
+    def test_polygon_clipping_preserves_ordered_intersection(self) -> None:
+        square = (
+            Point(-1.0, -1.0),
+            Point(1.0, -1.0),
+            Point(1.0, 1.0),
+            Point(-1.0, 1.0),
+        )
+        clipped = clip_polygon_by_halfplane(square, HalfPlane(1.0, 0.0, 0.0))
+        self.assertEqual(len(clipped), 4)
+        self.assertTrue(all(point.x <= 1e-8 for point in clipped))
+        self.assertAlmostEqual(max(point.x for point in clipped), 0.0, places=8)
 
     def test_symmetric_stations_produce_bounded_region(self) -> None:
         observations = [

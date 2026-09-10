@@ -22,6 +22,7 @@ from matplotlib.patches import Circle as CirclePatch
 from matplotlib.patches import Polygon
 from PIL import Image
 
+from plot_style import apply_publication_style
 from question1_geometry import Observation, Point, solve_question1
 
 
@@ -45,6 +46,7 @@ def configure_matplotlib() -> None:
         mpl.rcParams["font.sans-serif"] = [selected, "DejaVu Sans"]
     mpl.rcParams.update(
         {
+            "font.family": "sans-serif",
             "axes.unicode_minus": False,
             "pdf.fonttype": 42,
             "ps.fonttype": 42,
@@ -79,6 +81,7 @@ def ray_endpoint(observation: Observation, bearing_deg: float, length: float) ->
 
 
 def main() -> None:
+    apply_publication_style()
     configure_matplotlib()
     observations = [
         Observation(Point(-800.0, 0.0), 0.0),
