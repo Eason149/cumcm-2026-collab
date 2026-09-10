@@ -1,0 +1,174 @@
+{
+  "case": "four symmetric stations, true source at the origin",
+  "angle_error_deg": 1.0,
+  "observations": [
+    {
+      "station": {
+        "x": -800.0,
+        "y": 0.0
+      },
+      "bearing_deg": 0.0
+    },
+    {
+      "station": {
+        "x": 800.0,
+        "y": 0.0
+      },
+      "bearing_deg": 180.0
+    },
+    {
+      "station": {
+        "x": 0.0,
+        "y": -900.0
+      },
+      "bearing_deg": 90.0
+    },
+    {
+      "station": {
+        "x": 0.0,
+        "y": 900.0
+      },
+      "bearing_deg": 270.0
+    }
+  ],
+  "intersection_status": "bounded",
+  "vertices": [
+    {
+      "x": -15.709558435395804,
+      "y": 5.598913187765975e-13
+    },
+    {
+      "x": -15.470528551757724,
+      "y": -13.694012862230029
+    },
+    {
+      "x": -2.8808953311595284e-11,
+      "y": -13.964051942574315
+    },
+    {
+      "x": 15.470528551757651,
+      "y": -13.694012862229043
+    },
+    {
+      "x": 15.709558435395595,
+      "y": -6.362401349734148e-12
+    },
+    {
+      "x": 15.470528551757429,
+      "y": 13.69401286222924
+    },
+    {
+      "x": -1.6796739563297938e-12,
+      "y": 13.96405194257404
+    },
+    {
+      "x": -15.470528551757756,
+      "y": 13.694012862229291
+    }
+  ],
+  "diameter_m": 41.321337923240435,
+  "diametral_pairs": [
+    [
+      {
+        "x": -15.470528551757724,
+        "y": -13.694012862230029
+      },
+      {
+        "x": 15.470528551757429,
+        "y": 13.69401286222924
+      }
+    ],
+    [
+      {
+        "x": 15.470528551757651,
+        "y": -13.694012862229043
+      },
+      {
+        "x": -15.470528551757756,
+        "y": 13.694012862229291
+      }
+    ]
+  ],
+  "diametral_circle_checks": [
+    {
+      "center": {
+        "x": -1.474376176702208e-13,
+        "y": -3.943512183468556e-13
+      },
+      "radius_m": 20.660668961620217,
+      "farthest_vertex_distance_m": 20.660668961620274,
+      "covers": true
+    },
+    {
+      "center": {
+        "x": -5.240252676230739e-14,
+        "y": 1.2434497875801753e-13
+      },
+      "radius_m": 20.66066896162,
+      "farthest_vertex_distance_m": 20.660668961620633,
+      "covers": true
+    }
+  ],
+  "minimum_enclosing_circle": {
+    "center": {
+      "x": -5.240252676230739e-14,
+      "y": 1.2434497875801753e-13
+    },
+    "radius_m": 20.66066896162,
+    "support": [
+      {
+        "x": 15.470528551757651,
+        "y": -13.694012862229043
+      },
+      {
+        "x": -15.470528551757756,
+        "y": 13.694012862229291
+      }
+    ]
+  },
+  "guaranteed_clear_from_mec_center": false,
+  "sensitivity": [
+    {
+      "angle_error_deg": 0.25,
+      "diameter_m": 10.463005544381643,
+      "minimum_enclosing_radius_m": 5.2315027721904706,
+      "guaranteed_clear_from_mec_center": true
+    },
+    {
+      "angle_error_deg": 0.5,
+      "diameter_m": 20.836530379721214,
+      "minimum_enclosing_radius_m": 10.418265189860373,
+      "guaranteed_clear_from_mec_center": true
+    },
+    {
+      "angle_error_deg": 0.75,
+      "diameter_m": 31.122132664000976,
+      "minimum_enclosing_radius_m": 15.561066332000472,
+      "guaranteed_clear_from_mec_center": true
+    },
+    {
+      "angle_error_deg": 1.0,
+      "diameter_m": 41.321337923240435,
+      "minimum_enclosing_radius_m": 20.66066896162,
+      "guaranteed_clear_from_mec_center": false
+    },
+    {
+      "angle_error_deg": 1.25,
+      "diameter_m": 51.43563996018381,
+      "minimum_enclosing_radius_m": 25.71781998009181,
+      "guaranteed_clear_from_mec_center": false
+    },
+    {
+      "angle_error_deg": 1.5,
+      "diameter_m": 61.46650173462897,
+      "minimum_enclosing_radius_m": 30.733250867314478,
+      "guaranteed_clear_from_mec_center": false
+    },
+    {
+      "angle_error_deg": 2.0,
+      "diameter_m": 81.28360721276272,
+      "minimum_enclosing_radius_m": 40.64180360638104,
+      "guaranteed_clear_from_mec_center": false
+    }
+  ]
+}
