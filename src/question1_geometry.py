@@ -110,8 +110,12 @@ def observation_halfplanes(
     reject the backward extensions of the bearing lines.
     """
 
-    if not 0.0 <= error_deg < 90.0:
-        raise ValueError("error_deg must lie in [0, 90).")
+    # With exactly zero angular width, two cross-product half-planes describe
+    # the complete bearing line rather than its forward ray.  The competition
+    # uses a strictly positive 1-degree bound, so reject the unsupported
+    # degenerate case explicitly instead of silently admitting backward points.
+    if not 0.0 < error_deg < 90.0:
+        raise ValueError("error_deg must lie in (0, 90).")
     if not all(
         isfinite(value)
         for value in (

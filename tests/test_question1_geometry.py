@@ -26,6 +26,10 @@ from question1_geometry import (  # noqa: E402
 
 
 class Question1GeometryTests(unittest.TestCase):
+    def test_zero_error_is_rejected_instead_of_creating_a_full_line(self) -> None:
+        with self.assertRaises(ValueError):
+            observation_halfplanes(Observation(Point(0.0, 0.0), 0.0), 0.0)
+
     def test_forward_wedge_rejects_backward_extension(self) -> None:
         planes = observation_halfplanes(Observation(Point(0.0, 0.0), 0.0), 1.0)
         self.assertTrue(all(plane.contains(Point(100.0, 0.0)) for plane in planes))
@@ -44,6 +48,35 @@ class Question1GeometryTests(unittest.TestCase):
             [HalfPlane(1.0, 0.0, 0.0), HalfPlane(-1.0, 0.0, -1.0)]
         )
         self.assertEqual(result.status, "empty")
+
+    def test_degenerate_segment_is_retained(self) -> None:
+        result = intersect_halfplanes(
+            [
+                HalfPlane(1.0, 0.0, 1.0),
+                HalfPlane(-1.0, 0.0, 0.0),
+                HalfPlane(0.0, 1.0, 0.0),
+                HalfPlane(0.0, -1.0, 0.0),
+            ]
+        )
+        self.assertEqual(result.status, "bounded")
+        self.assertEqual(result.vertices, (Point(0.0, 0.0), Point(1.0, 0.0)))
+        diameter, _ = polygon_diameter(result.vertices)
+        self.assertAlmostEqual(diameter, 1.0)
+
+    def test_degenerate_single_point_is_retained(self) -> None:
+        result = intersect_halfplanes(
+            [
+                HalfPlane(1.0, 0.0, 0.0),
+                HalfPlane(-1.0, 0.0, 0.0),
+                HalfPlane(0.0, 1.0, 0.0),
+                HalfPlane(0.0, -1.0, 0.0),
+            ]
+        )
+        self.assertEqual(result.status, "bounded")
+        self.assertEqual(result.vertices, (Point(0.0, 0.0),))
+        diameter, pairs = polygon_diameter(result.vertices)
+        self.assertAlmostEqual(diameter, 0.0)
+        self.assertEqual(pairs, ((Point(0.0, 0.0), Point(0.0, 0.0)),))
 
     def test_symmetric_stations_produce_bounded_region(self) -> None:
         observations = [

@@ -6,6 +6,8 @@ __pycache__/
 .ruff_cache/
 .venv/
 venv/
+.test-deps/
+.test-deps-local/
 
 # Jupyter
 .ipynb_checkpoints/
