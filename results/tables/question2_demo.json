@@ -1,0 +1,175 @@
+{
+  "scenario": {
+    "first_station": {
+      "x": 0.0,
+      "y": 0.0
+    },
+    "first_bearing_deg": 35.0,
+    "bearing_error_bound_deg": 1.0,
+    "target_radius_m": 1800.0,
+    "unknown_reception_radius_range_m": [
+      1000.0,
+      1500.0
+    ],
+    "circle_approximation_sides": 180,
+    "maximum_radial_excess_for_1500_m_circle_m": 0.22849206586161852
+  },
+  "first_region": {
+    "vertex_count": 5,
+    "diameter_m": 1495.2292561363988,
+    "vertices": [
+      {
+        "x": 4.045084971874758,
+        "y": 2.938926261462484
+      },
+      {
+        "x": 4.145187862775209,
+        "y": 2.795964517353734
+      },
+      {
+        "x": 1243.5563588325624,
+        "y": 838.7893552061203
+      },
+      {
+        "x": 1228.9152361763397,
+        "y": 860.4957121914437
+      },
+      {
+        "x": 1213.5254915624212,
+        "y": 881.6778784387097
+      }
+    ]
+  },
+  "candidate_rule": {
+    "guaranteed_reception_distance_m": 1000.0,
+    "operational_design_distance_m": 999.0,
+    "reception_safety_margin_m": 1.0,
+    "primary_objective": "maximize sampled worst-case acute intersection angle",
+    "tie_breaker": "minimize travel distance",
+    "coarse_grid_size": 181,
+    "local_refinement_grid_sizes": [
+      81,
+      61
+    ],
+    "dense_angle_audit_source_count": 14001
+  },
+  "positive_candidate": {
+    "point": {
+      "x": 253.24554852855954,
+      "y": 970.2212556829576
+    },
+    "guaranteed_visible": true,
+    "maximum_source_distance_m": 998.9944171355133,
+    "minimum_intersection_angle_deg": 39.553076642556356,
+    "travel_distance_m": 1002.7275765772805,
+    "travel_time_s": 200.5455153154561
+  },
+  "negative_candidate": {
+    "point": {
+      "x": 998.1301726574579,
+      "y": -93.82361523586803
+    },
+    "guaranteed_visible": true,
+    "maximum_source_distance_m": 998.9986524352788,
+    "minimum_intersection_angle_deg": 39.55195178568544,
+    "travel_distance_m": 1002.5301553295716,
+    "travel_time_s": 200.50603106591433
+  },
+  "dense_angle_audit": {
+    "positive_minimum_angle_deg": 39.553076642556356,
+    "negative_minimum_angle_deg": 39.55195178568544
+  },
+  "centerline_baseline": {
+    "point": {
+      "x": 616.5051862968335,
+      "y": 431.6815787904242
+    },
+    "guaranteed_visible": true,
+    "maximum_source_distance_m": 747.6161545850686,
+    "minimum_intersection_angle_deg": 8.686654966260191e-14,
+    "travel_distance_m": 752.6138652708217,
+    "travel_time_s": 150.52277305416436
+  },
+  "sampled_worst_posterior": {
+    "source_sample_count": 601,
+    "measurement_error_grid_count": 21,
+    "selected_candidate_diameter_m": 113.02121726314886,
+    "selected_worst_source": {
+      "x": 1243.5563588325624,
+      "y": 838.7893552061203
+    },
+    "selected_worst_measurement_error_deg": -1.0,
+    "centerline_baseline_diameter_m": 747.616154585073,
+    "relative_reduction": 0.848824538407847
+  },
+  "representative_source": {
+    "point": {
+      "x": 737.2368398600926,
+      "y": 516.2187927159414
+    },
+    "distance_from_first_station_m": 900.0,
+    "worst_tested_second_measurement_error_deg": 1.0,
+    "posterior_diameter_m": 44.525893545165275,
+    "posterior_minimum_enclosing_circle": {
+      "center": {
+        "x": 747.4515536670044,
+        "y": 523.0396800713952
+      },
+      "radius_m": 22.262946772582637
+    }
+  },
+  "grid_convergence": [
+    {
+      "grid_size": 61,
+      "positive_point": {
+        "x": 256.2311709348843,
+        "y": 965.4253616480657
+      },
+      "positive_minimum_angle_deg": 39.31768500080378,
+      "negative_point": {
+        "x": 966.0206486649091,
+        "y": -80.95151869200213
+      },
+      "negative_minimum_angle_deg": 38.976015562269716
+    },
+    {
+      "grid_size": 101,
+      "positive_point": {
+        "x": 251.16124609395553,
+        "y": 957.9512410742079
+      },
+      "positive_minimum_angle_deg": 39.49251086396043,
+      "negative_point": {
+        "x": 966.0206486649091,
+        "y": -84.68857897893093
+      },
+      "negative_minimum_angle_deg": 39.19687000856556
+    },
+    {
+      "grid_size": 141,
+      "positive_point": {
+        "x": 254.42048349169545,
+        "y": 970.7640192008209
+      },
+      "positive_minimum_angle_deg": 39.49562692750003,
+      "negative_point": {
+        "x": 998.6130226423082,
+        "y": -94.29816257389075
+      },
+      "negative_minimum_angle_deg": 39.576356840765
+    },
+    {
+      "grid_size": 181,
+      "positive_point": {
+        "x": 252.00623356744364,
+        "y": 965.4253616480655
+      },
+      "positive_minimum_angle_deg": 39.553286047382805,
+      "negative_point": {
+        "x": 995.5952102369936,
+        "y": -93.40838631509817
+      },
+      "negative_minimum_angle_deg": 39.54228687229127
+    }
+  ]
+}

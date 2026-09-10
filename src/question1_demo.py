@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle as CirclePatch
 from matplotlib.patches import Polygon
 
+from plot_style import PALETTE, add_panel_label, apply_publication_style
 from question1_geometry import Observation, Point, solve_question1
 
 
@@ -28,6 +29,7 @@ TABLE_PATH = ROOT / "results" / "tables" / "question1_demo.json"
 
 
 def main() -> None:
+    apply_publication_style()
     observations = [
         Observation(Point(-800.0, 0.0), 0.0),
         Observation(Point(800.0, 0.0), 180.0),
@@ -98,20 +100,27 @@ def main() -> None:
             Polygon(
                 polygon_xy,
                 closed=True,
-                facecolor="#9ecae1",
-                edgecolor="#08519c",
+                facecolor=PALETTE["light_blue"],
+                edgecolor=PALETTE["teal"],
                 linewidth=2,
                 alpha=0.65,
                 label="Feasible polygon",
             )
         )
         axis.scatter(
-            [0.0], [0.0], marker="*", s=160, color="#d7301f", label="True source"
+            [0.0],
+            [0.0],
+            marker="*",
+            s=170,
+            color=PALETTE["red"],
+            edgecolor=PALETTE["ink"],
+            linewidth=0.5,
+            label="True source",
         )
         axis.plot(
             [first_pair[0].x, first_pair[1].x],
             [first_pair[0].y, first_pair[1].y],
-            color="#756bb1",
+            color="#8479C7",
             linewidth=2,
             label=f"Diameter = {diameter:.3f} m",
         )
@@ -120,7 +129,7 @@ def main() -> None:
                 (enclosing.center.x, enclosing.center.y),
                 enclosing.radius,
                 fill=False,
-                edgecolor="#31a354",
+                edgecolor="#66A977",
                 linestyle="--",
                 linewidth=2,
                 label=f"Minimum enclosing radius = {enclosing.radius:.3f} m",
@@ -136,26 +145,30 @@ def main() -> None:
                 stations_y,
                 marker="^",
                 s=80,
-                color="#252525",
+                color=PALETTE["coral"],
+                edgecolor=PALETTE["ink"],
+                linewidth=0.7,
                 label="Stations",
             )
             for observation in observations:
                 axis.plot(
                     [observation.station.x, 0.0],
                     [observation.station.y, 0.0],
-                    color="#969696",
+                    color=PALETTE["gray"],
                     linewidth=0.9,
                     alpha=0.7,
                 )
             axis.set_ylabel("North y (m)")
             axis.set_title("Full station geometry")
             axis.legend(loc="upper right", fontsize=8)
+            add_panel_label(axis, "A")
         else:
             margin = enclosing.radius * 1.35
             axis.set_xlim(enclosing.center.x - margin, enclosing.center.x + margin)
             axis.set_ylim(enclosing.center.y - margin, enclosing.center.y + margin)
             axis.set_title("Localization region (zoomed)")
             axis.legend(loc="upper right", fontsize=8)
+            add_panel_label(axis, "B")
 
     figure.suptitle("Question 1 bounded-bearing localization", fontsize=15)
     FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -168,17 +181,29 @@ def main() -> None:
     errors = [row["angle_error_deg"] for row in sensitivity]
     diameters = [row["diameter_m"] for row in sensitivity]
     radii = [row["minimum_enclosing_radius_m"] for row in sensitivity]
-    sensitivity_axis.plot(errors, diameters, "o-", color="#756bb1", label="Diameter")
+    sensitivity_axis.plot(
+        errors,
+        diameters,
+        "o-",
+        color=PALETTE["coral"],
+        markeredgecolor=PALETTE["ink"],
+        markeredgewidth=0.5,
+        linewidth=2.2,
+        label="Diameter",
+    )
     sensitivity_axis.plot(
         errors,
         radii,
         "s-",
-        color="#31a354",
+        color=PALETTE["teal"],
+        markeredgecolor=PALETTE["ink"],
+        markeredgewidth=0.5,
+        linewidth=2.2,
         label="Minimum enclosing radius",
     )
     sensitivity_axis.axhline(
         20.0,
-        color="#d7301f",
+        color=PALETTE["red"],
         linestyle="--",
         linewidth=1.5,
         label="20 m clearing radius",
@@ -186,7 +211,6 @@ def main() -> None:
     sensitivity_axis.set_xlabel("Bearing error bound (degrees)")
     sensitivity_axis.set_ylabel("Distance (m)")
     sensitivity_axis.set_title("Sensitivity to the bearing error bound")
-    sensitivity_axis.grid(alpha=0.25)
     sensitivity_axis.legend()
     sensitivity_figure.savefig(SENSITIVITY_FIGURE_PATH, dpi=220)
     plt.close(sensitivity_figure)

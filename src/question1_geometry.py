@@ -190,6 +190,67 @@ def convex_hull(points: Sequence[Point], tol: float = DEFAULT_TOL) -> tuple[Poin
     return tuple(lower[:-1] + upper[:-1])
 
 
+def clip_polygon_by_halfplane(
+    vertices: Sequence[Point],
+    halfplane: HalfPlane,
+    tol: float = DEFAULT_TOL,
+) -> tuple[Point, ...]:
+    """Clip a convex polygon by one half-plane using Sutherland-Hodgman.
+
+    The input vertices must be ordered around the polygon.  Single-point and
+    line-segment degeneracies are supported so the function can also update a
+    nearly collapsed localization region.
+    """
+
+    polygon = tuple(vertices)
+    if not polygon:
+        return ()
+    plane = halfplane.normalized()
+
+    def signed_value(point: Point) -> float:
+        return plane.a * point.x + plane.b * point.y - plane.c
+
+    output: list[Point] = []
+    for start, end in zip(polygon, polygon[1:] + polygon[:1]):
+        start_value = signed_value(start)
+        end_value = signed_value(end)
+        start_inside = start_value <= tol
+        end_inside = end_value <= tol
+
+        if start_inside:
+            output.append(start)
+        if start_inside != end_inside:
+            denominator = start_value - end_value
+            if abs(denominator) > tol:
+                fraction = start_value / denominator
+                output.append(
+                    Point(
+                        start.x + fraction * (end.x - start.x),
+                        start.y + fraction * (end.y - start.y),
+                    )
+                )
+
+    unique = _deduplicate_points(output, tol)
+    if len(unique) <= 2:
+        return tuple(unique)
+    return convex_hull(unique, tol)
+
+
+def clip_polygon(
+    vertices: Sequence[Point],
+    halfplanes: Sequence[HalfPlane],
+    tol: float = DEFAULT_TOL,
+) -> tuple[Point, ...]:
+    """Clip a convex polygon successively by several half-planes."""
+
+    polygon = tuple(vertices)
+    for halfplane in halfplanes:
+        polygon = clip_polygon_by_halfplane(polygon, halfplane, tol)
+        if not polygon:
+            break
+    return polygon
+
+
 def intersect_halfplanes(
     halfplanes: Sequence[HalfPlane],
     tol: float = DEFAULT_TOL,
