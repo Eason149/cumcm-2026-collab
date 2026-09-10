@@ -15,9 +15,11 @@ from question1_geometry import Observation, Point, polygon_diameter  # noqa: E40
 from question2_strategy import (  # noqa: E402
     centerline_baseline,
     circumscribed_circle_polygon,
+    conditional_reception_evaluation,
     first_source_region,
     posterior_polygon,
     sample_convex_polygon,
+    search_posterior_optimal_candidates,
     search_second_station_candidates,
     worst_posterior_diameter,
 )
@@ -88,6 +90,47 @@ class Question2StrategyTests(unittest.TestCase):
             )
             self.assertTrue(posterior)
             self.assertTrue(_inside_convex_polygon(source, posterior))
+
+    def test_conditional_reception_accepts_valid_expanded_domain_point(self) -> None:
+        angle = math.radians(35.0)
+        along = (math.cos(angle), math.sin(angle))
+        normal = (-math.sin(angle), math.cos(angle))
+        candidate = Point(
+            650.0 * along[0] + 750.0 * normal[0],
+            650.0 * along[1] + 750.0 * normal[1],
+        )
+        audit = conditional_reception_evaluation(
+            candidate,
+            self.observation.station,
+            self.region,
+        )
+        self.assertTrue(audit.guaranteed_visible)
+        self.assertGreater(audit.minimum_margin_m, 9.0)
+        for source in sample_convex_polygon(self.region, 40, 10):
+            sampled_margin = max(
+                1000.0, source.distance_to(self.observation.station)
+            ) - source.distance_to(candidate)
+            self.assertGreaterEqual(sampled_margin + 1e-6, audit.minimum_margin_m)
+
+    def test_posterior_search_uses_loss_then_near_optimal_travel(self) -> None:
+        result = search_posterior_optimal_candidates(
+            self.observation,
+            self.region,
+            grid_size=21,
+            source_edge_subdivisions=4,
+            source_radial_levels=3,
+            measurement_errors_deg=(-1.0, 0.0, 1.0),
+        )
+        self.assertTrue(result.optimum.guaranteed_visible)
+        self.assertTrue(result.recommended.guaranteed_visible)
+        self.assertLessEqual(
+            result.recommended_posterior.worst_diameter_m,
+            result.near_optimal_threshold_m + 1e-7,
+        )
+        self.assertLessEqual(
+            result.recommended.travel_distance_m,
+            result.optimum.travel_distance_m + 1e-7,
+        )
 
     def test_robust_candidate_reduces_sampled_worst_posterior(self) -> None:
         grid = search_second_station_candidates(
