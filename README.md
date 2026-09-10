@@ -55,3 +55,15 @@ paper/             论文源文件及附录
 - 未提交账号、密钥、个人隐私或无授权材料。
 
 详细协作规则见 [CONTRIBUTING.md](CONTRIBUTING.md)，Codex 项目规则见 [AGENTS.md](AGENTS.md)。
+
+## 当前建模成果
+
+- [问题一：交会定位区域直径与覆盖圆判定](paper/问题一_交会定位区域直径与覆盖判定.md)
+
+复现问题一结果：
+
+```bash
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -v
+python src/question1_demo.py
+```
