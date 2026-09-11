@@ -226,8 +226,138 @@ def _region_radius_and_center(state: ChannelState) -> tuple[float, Point]:
     return circle.radius, circle.center
 
 
+def _nominal_bearing_intersection(state: ChannelState) -> Point | None:
+    """Return an angular least-squares point estimate for cheap trial clears.
+
+    This estimate is never used as a worst-case certificate.  A failed trial is
+    followed by another measurement and the deterministic feasible-region
+    policy remains the final fallback.
+    """
+
+    a00 = a01 = a11 = b0 = b1 = 0.0
+    for observation in state.observations:
+        angle = observation.bearing_deg * pi / 180.0
+        ux, uy = cos(angle), sin(angle)
+        m00, m01, m11 = 1.0 - ux * ux, -ux * uy, 1.0 - uy * uy
+        a00 += m00
+        a01 += m01
+        a11 += m11
+        b0 += m00 * observation.station.x + m01 * observation.station.y
+        b1 += m01 * observation.station.x + m11 * observation.station.y
+    determinant = a00 * a11 - a01 * a01
+    if determinant <= 1e-4:
+        return None
+    point = Point(
+        (b0 * a11 - b1 * a01) / determinant,
+        (a00 * b1 - a01 * b0) / determinant,
+    )
+
+    def project(candidate: Point) -> Point:
+        radial_distance = hypot(candidate.x, candidate.y)
+        if radial_distance <= TARGET_RADIUS_M:
+            return candidate
+        scale = TARGET_RADIUS_M / radial_distance
+        return Point(candidate.x * scale, candidate.y * scale)
+
+    def angular_cost(candidate: Point) -> float:
+        total = 0.0
+        for observation in state.observations:
+            predicted = atan2(
+                candidate.y - observation.station.y,
+                candidate.x - observation.station.x,
+            )
+            measured = observation.bearing_deg * pi / 180.0
+            residual = atan2(sin(predicted - measured), cos(predicted - measured))
+            total += residual * residual
+        return total
+
+    point = project(point)
+    # Refine the algebraic line intersection with angular least squares because
+    # the simulator perturbs angles, not perpendicular distances.
+    for _ in range(12):
+        h00 = h01 = h11 = g0 = g1 = 0.0
+        for observation in state.observations:
+            dx = point.x - observation.station.x
+            dy = point.y - observation.station.y
+            squared_distance = max(dx * dx + dy * dy, 1.0)
+            jx, jy = -dy / squared_distance, dx / squared_distance
+            predicted = atan2(dy, dx)
+            measured = observation.bearing_deg * pi / 180.0
+            residual = atan2(sin(predicted - measured), cos(predicted - measured))
+            h00 += jx * jx
+            h01 += jx * jy
+            h11 += jy * jy
+            g0 += jx * residual
+            g1 += jy * residual
+        damping = 1e-10
+        h00 += damping
+        h11 += damping
+        normal_determinant = h00 * h11 - h01 * h01
+        if normal_determinant <= 1e-18:
+            break
+        step_x = (-g0 * h11 + g1 * h01) / normal_determinant
+        step_y = (-h00 * g1 + h01 * g0) / normal_determinant
+        step_norm = hypot(step_x, step_y)
+        if step_norm < 1e-4:
+            break
+        if step_norm > 500.0:
+            scale = 500.0 / step_norm
+            step_x *= scale
+            step_y *= scale
+        old_cost = angular_cost(point)
+        accepted = False
+        for line_search in range(8):
+            fraction = 0.5**line_search
+            candidate = project(
+                Point(point.x + fraction * step_x, point.y + fraction * step_y)
+            )
+            if angular_cost(candidate) < old_cost:
+                point = candidate
+                accepted = True
+                break
+        if not accepted:
+            break
+
+    # A nominal estimate outside the deterministic feasible polygon is replaced
+    # by that polygon's centroid before it can trigger a trial clear.
+    if state.feasible_region:
+        polygon = state.feasible_region
+        cross_products = [
+            (second.x - first.x) * (point.y - first.y)
+            - (second.y - first.y) * (point.x - first.x)
+            for first, second in zip(polygon, polygon[1:] + polygon[:1])
+        ]
+        if not (
+            all(value >= -1e-7 for value in cross_products)
+            or all(value <= 1e-7 for value in cross_products)
+        ):
+            area_twice = 0.0
+            centroid_x = 0.0
+            centroid_y = 0.0
+            for first, second in zip(polygon, polygon[1:] + polygon[:1]):
+                cross = first.x * second.y - second.x * first.y
+                area_twice += cross
+                centroid_x += (first.x + second.x) * cross
+                centroid_y += (first.y + second.y) * cross
+            if abs(area_twice) <= 1e-9:
+                return Point(
+                    sum(vertex.x for vertex in polygon) / len(polygon),
+                    sum(vertex.y for vertex in polygon) / len(polygon),
+                )
+            return Point(
+                centroid_x / (3.0 * area_twice),
+                centroid_y / (3.0 * area_twice),
+            )
+    return point
+
+
+def _route_target(state: ChannelState) -> Point:
+    estimate = _nominal_bearing_intersection(state)
+    return estimate if estimate is not None else _region_radius_and_center(state)[1]
+
+
 def _open_route_length(start: Point, route: list[ChannelState]) -> float:
-    points = [start] + [_region_radius_and_center(state)[1] for state in route]
+    points = [start] + [_route_target(state) for state in route]
     return sum(first.distance_to(second) for first, second in zip(points, points[1:]))
 
 
@@ -255,7 +385,7 @@ def _plan_open_route(start: Point, states: list[ChannelState]) -> list[ChannelSt
 
     if len(states) < 2:
         return list(states)
-    centres = {state.channel: _region_radius_and_center(state)[1] for state in states}
+    centres = {state.channel: _route_target(state) for state in states}
     candidates: list[list[ChannelState]] = []
 
     # Nearest-neighbour seeds from every possible first task avoid committing to
@@ -287,11 +417,13 @@ class AdaptiveOmniSearch:
         circle_sides: int = 180,
         max_sources: int = 16,
         max_localization_steps: int = 12,
+        speculative_clear: bool = False,
     ) -> None:
         self.channels = tuple(channels)
         self.circle_sides = circle_sides
         self.max_sources = max_sources
         self.max_localization_steps = max_localization_steps
+        self.speculative_clear = speculative_clear
         self.states = {channel: ChannelState(channel) for channel in self.channels}
         self.measure_count = 0
         self.clear_attempt_count = 0
@@ -318,7 +450,35 @@ class AdaptiveOmniSearch:
         return reply.success
 
     def _resolve_channel(self, robot: RobotInterface, state: ChannelState) -> None:
+        speculative_attempts = 0
         for _ in range(self.max_localization_steps):
+            if (
+                self.speculative_clear
+                and len(state.observations) >= 2
+                and speculative_attempts < 2
+            ):
+                estimate = _nominal_bearing_intersection(state)
+                if estimate is not None:
+                    speculative_attempts += 1
+                    if self._clear(robot, estimate, state):
+                        return
+                    # Measure at the failed trial point: it costs no extra travel
+                    # and usually supplies a high-parallax correction bearing.
+                    reply = self._measure(robot, estimate, state.channel)
+                    if reply.result == "direction":
+                        _update_state_with_bearing(
+                            state,
+                            estimate,
+                            float(reply.bearing_deg),
+                            self.circle_sides,
+                        )
+                        continue
+                    if reply.result == "near":
+                        raise RuntimeError(
+                            f"Clear/measure inconsistency for channel {state.channel}."
+                        )
+                    speculative_attempts = 2
+
             radius_m, center = _region_radius_and_center(state)
             if radius_m <= CLEAR_RADIUS_M + 1e-7:
                 if not self._clear(robot, center, state):
@@ -332,10 +492,6 @@ class AdaptiveOmniSearch:
             if radius_m > MIN_RECEPTION_RADIUS_M + 1e-7:
                 next_point = _unused_robust_station(
                     state.observations, robot.position
-                )
-            elif len(state.observations) == 1:
-                next_point = robust_second_station(
-                    state.observations[0], robot.position
                 )
             else:
                 next_point = center
@@ -455,6 +611,7 @@ class BatchOmniSearch(AdaptiveOmniSearch):
         self.enroute_detour_limit_m = float(
             kwargs.pop("enroute_detour_limit_m", 500.0)
         )
+        kwargs.setdefault("speculative_clear", True)
         super().__init__(*args, **kwargs)
 
     def _clear_certified_en_route(

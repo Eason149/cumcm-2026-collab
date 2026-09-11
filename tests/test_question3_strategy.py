@@ -107,7 +107,9 @@ class Question3StrategyTests(unittest.TestCase):
             result = BatchOmniSearch(circle_sides=120).run(simulator)
             self.assertEqual(len(result.cleared_channels), len(sources), msg=f"seed={seed}")
             self.assertTrue(all(source.cleared for source in sources))
-            self.assertLessEqual(result.clear_attempt_count, len(sources))
+            # At most two cheap nominal-position attempts precede the certified
+            # feasible-region fallback for each source.
+            self.assertLessEqual(result.clear_attempt_count, 3 * len(sources))
 
 
 if __name__ == "__main__":
