@@ -21,6 +21,7 @@ from question3_strategy import (  # noqa: E402
     AdaptiveOmniSearch,
     BatchOmniSearch,
     MIN_RECEPTION_RADIUS_M,
+    fast_second_station,
     robust_second_station,
     survey_covering_radius_m,
     survey_stations,
@@ -61,6 +62,15 @@ class Question3StrategyTests(unittest.TestCase):
                 source = Point(distance * cos(angle), distance * sin(angle))
                 allowed = max(1000.0, float(distance))
                 self.assertLessEqual(candidate.distance_to(source), allowed + 1e-7)
+
+    def test_fast_second_station_preserves_minimum_reception(self) -> None:
+        observation = Observation(Point(0.0, 0.0), 0.0)
+        candidate = fast_second_station(observation, Point(0.0, 0.0))
+        for distance in range(5, 1501, 5):
+            for error_deg in (-1.0, 0.0, 1.0):
+                angle = error_deg * pi / 180.0
+                source = Point(distance * cos(angle), distance * sin(angle))
+                self.assertLessEqual(candidate.distance_to(source), 1000.0 + 1e-7)
 
     def test_local_simulator_reuses_same_point_error(self) -> None:
         source = OmniSource(1, Point(500.0, 100.0), 1000.0)
