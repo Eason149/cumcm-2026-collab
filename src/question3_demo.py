@@ -19,6 +19,7 @@ import numpy as np
 from matplotlib.patches import Circle as CirclePatch
 
 from plot_style import PALETTE, add_panel_label, apply_publication_style, save_publication_figure, style_axis
+from question1_geometry import Point
 from question3_simulator import LocalOmniSimulator, random_case
 from question3_strategy import (
     AdaptiveOmniSearch,
@@ -47,6 +48,15 @@ def run_cases(case_count: int = 30) -> tuple[list[dict[str, object]], LocalOmniS
         simulator = LocalOmniSimulator(sources, seed=10_000 + seed)
         result = BatchOmniSearch(circle_sides=120).run(simulator)
         actual = len(sources)
+        visited = list(result.survey_stations_visited)
+        survey_route = [Point(0.0, 0.0)] + visited
+        survey_distance_m = sum(
+            first.distance_to(second)
+            for first, second in zip(survey_route, survey_route[1:])
+        )
+        movement_distance_m = 5.0 * sum(
+            float(action["movement_s"]) for action in simulator.actions
+        )
         record = {
             "seed": seed,
             "source_count": actual,
@@ -57,6 +67,8 @@ def run_cases(case_count: int = 30) -> tuple[list[dict[str, object]], LocalOmniS
             "measure_count": result.measure_count,
             "clear_attempt_count": result.clear_attempt_count,
             "survey_station_count": len(result.survey_stations_visited),
+            "movement_distance_m": movement_distance_m,
+            "survey_distance_m": survey_distance_m,
             "baseline_completion_time_s": baseline.completion_time_s,
             "time_reduction_vs_immediate_pct": 100.0
             * (baseline.completion_time_s - result.completion_time_s)
@@ -78,6 +90,8 @@ def summarize(records: list[dict[str, object]]) -> dict[str, object]:
         "measure_count",
         "clear_attempt_count",
         "survey_station_count",
+        "movement_distance_m",
+        "survey_distance_m",
         "baseline_completion_time_s",
         "time_reduction_vs_immediate_pct",
     )
@@ -98,6 +112,22 @@ def summarize(records: list[dict[str, object]]) -> dict[str, object]:
     summary["minimum_reception_margin_m"] = (
         MIN_RECEPTION_RADIUS_M - survey_covering_radius_m()
     )
+    by_source_count: dict[str, object] = {}
+    for source_count in sorted({int(record["source_count"]) for record in records}):
+        subset = [record for record in records if record["source_count"] == source_count]
+        by_source_count[str(source_count)] = {
+            "case_count": len(subset),
+            "cleared_ratio_mean": float(
+                np.mean([float(record["cleared_ratio"]) for record in subset])
+            ),
+            "completion_time_mean_s": float(
+                np.mean([float(record["completion_time_s"]) for record in subset])
+            ),
+            "average_clear_time_mean_s": float(
+                np.mean([float(record["average_clear_time_s"]) for record in subset])
+            ),
+        }
+    summary["by_source_count"] = by_source_count
     return summary
 
 
@@ -127,8 +157,18 @@ def write_summary_markdown(summary: dict[str, object]) -> None:
             "",
             f"批量策略相对即时定位 baseline 的平均总时间降幅为 "
             f"{float(reduction['mean']):.1f}%。",
+            "",
+            "| 源数量 | 案例数 | 平均清除比例 | 平均总时间（s） | 平均每源时间（s/个） |",
+            "|---:|---:|---:|---:|---:|",
         )
     )
+    for source_count, values in summary["by_source_count"].items():
+        lines.append(
+            f"| {source_count} | {values['case_count']} | "
+            f"{values['cleared_ratio_mean']:.3f} | "
+            f"{values['completion_time_mean_s']:.1f} | "
+            f"{values['average_clear_time_mean_s']:.1f} |"
+        )
     SUMMARY_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

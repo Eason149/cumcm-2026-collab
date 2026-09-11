@@ -29,11 +29,19 @@ from question3_strategy import (  # noqa: E402
 
 class Question3StrategyTests(unittest.TestCase):
     def test_seven_stations_cover_target_with_margin(self) -> None:
-        self.assertEqual(len(survey_stations()), 7)
+        stations = survey_stations()
+        self.assertEqual(len(stations), 7)
+        self.assertTrue(
+            all(abs(station.distance_to(Point(0.0, 0.0)) - 999.0) < 1e-7 for station in stations)
+        )
         self.assertLess(survey_covering_radius_m(), MIN_RECEPTION_RADIUS_M)
+        patrol_distance = Point(0.0, 0.0).distance_to(stations[0]) + sum(
+            first.distance_to(second)
+            for first, second in zip(stations, stations[1:])
+        )
+        self.assertLess(patrol_distance, 6201.0)
 
         # Direct deterministic audit of the full disk.
-        stations = survey_stations()
         worst = 0.0
         for radial_index in range(101):
             radius = 1800.0 * radial_index / 100.0
@@ -88,7 +96,9 @@ class Question3StrategyTests(unittest.TestCase):
             result = AdaptiveOmniSearch(circle_sides=120).run(simulator)
             self.assertEqual(len(result.cleared_channels), len(sources), msg=f"seed={seed}")
             self.assertGreater(result.average_clear_time_s, 0.0)
-            self.assertLessEqual(result.clear_attempt_count, len(sources))
+            # At most two cheap nominal-position attempts precede the certified
+            # feasible-region fallback for each source.
+            self.assertLessEqual(result.clear_attempt_count, 3 * len(sources))
 
     def test_batch_policy_clears_every_source(self) -> None:
         for seed in range(5):

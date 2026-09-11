@@ -32,7 +32,8 @@ MAX_RECEPTION_RADIUS_M = 1500.0
 CLEAR_RADIUS_M = 20.0
 NEAR_RADIUS_M = 5.0
 BEARING_ERROR_DEG = 1.0
-SURVEY_RING_RADIUS_M = 1200.0
+SURVEY_RING_RADIUS_M = 999.0
+SURVEY_STATION_COUNT = 7
 
 
 @dataclass(frozen=True)
@@ -85,16 +86,16 @@ class StrategyResult:
 
 
 def survey_stations(ring_radius_m: float = SURVEY_RING_RADIUS_M) -> tuple[Point, ...]:
-    """Return the origin and six equally spaced stations on a survey ring."""
+    """Return seven equally spaced stations on a survey ring."""
 
     if ring_radius_m <= 0.0:
         raise ValueError("ring_radius_m must be positive.")
-    return (Point(0.0, 0.0),) + tuple(
+    return tuple(
         Point(
-            ring_radius_m * cos(index * pi / 3.0),
-            ring_radius_m * sin(index * pi / 3.0),
+            ring_radius_m * cos(2.0 * index * pi / SURVEY_STATION_COUNT),
+            ring_radius_m * sin(2.0 * index * pi / SURVEY_STATION_COUNT),
         )
-        for index in range(6)
+        for index in range(SURVEY_STATION_COUNT)
     )
 
 
@@ -104,16 +105,18 @@ def survey_covering_radius_m(
 ) -> float:
     """Worst distance to the seven survey stations over the target disk.
 
-    In a 60-degree sector the only candidates are the Voronoi junction between
-    the centre and two adjacent ring stations, and the outer boundary midway
-    between those stations.
+    The only worst candidates are the target centre and the outer boundary
+    midway between two adjacent ring stations.
     """
 
-    inner_gap = ring_radius_m / sqrt(3.0)
+    inner_gap = ring_radius_m
     boundary_gap = sqrt(
         target_radius_m**2
         + ring_radius_m**2
-        - 2.0 * target_radius_m * ring_radius_m * cos(pi / 6.0)
+        - 2.0
+        * target_radius_m
+        * ring_radius_m
+        * cos(pi / SURVEY_STATION_COUNT)
     )
     return max(inner_gap, boundary_gap)
 
@@ -221,6 +224,57 @@ def _update_state_with_bearing(
 def _region_radius_and_center(state: ChannelState) -> tuple[float, Point]:
     circle = minimum_enclosing_circle(state.feasible_region, tol=1e-7)
     return circle.radius, circle.center
+
+
+def _open_route_length(start: Point, route: list[ChannelState]) -> float:
+    points = [start] + [_region_radius_and_center(state)[1] for state in route]
+    return sum(first.distance_to(second) for first, second in zip(points, points[1:]))
+
+
+def _two_opt_open_route(start: Point, route: list[ChannelState]) -> list[ChannelState]:
+    """Shorten an open route while keeping its start fixed and end free."""
+
+    best = list(route)
+    best_length = _open_route_length(start, best)
+    improved = True
+    while improved:
+        improved = False
+        for left in range(len(best) - 1):
+            for right in range(left + 1, len(best)):
+                candidate = best[:left] + list(reversed(best[left : right + 1])) + best[right + 1 :]
+                candidate_length = _open_route_length(start, candidate)
+                if candidate_length + 1e-7 < best_length:
+                    best = candidate
+                    best_length = candidate_length
+                    improved = True
+    return best
+
+
+def _plan_open_route(start: Point, states: list[ChannelState]) -> list[ChannelState]:
+    """Plan a deterministic multi-start 2-opt route through feasible centres."""
+
+    if len(states) < 2:
+        return list(states)
+    centres = {state.channel: _region_radius_and_center(state)[1] for state in states}
+    candidates: list[list[ChannelState]] = []
+
+    # Nearest-neighbour seeds from every possible first task avoid committing to
+    # the locally nearest region when it produces an expensive final detour.
+    for first in states:
+        remaining = [state for state in states if state is not first]
+        route = [first]
+        point = centres[first.channel]
+        while remaining:
+            following = min(
+                remaining,
+                key=lambda state: point.distance_to(centres[state.channel]),
+            )
+            route.append(following)
+            remaining.remove(following)
+            point = centres[following.channel]
+        candidates.append(_two_opt_open_route(start, route))
+
+    return min(candidates, key=lambda route: _open_route_length(start, route))
 
 
 class AdaptiveOmniSearch:
@@ -353,11 +407,9 @@ class AdaptiveOmniSearch:
 
         unvisited = list(survey_stations())
         visited: list[Point] = []
-        # The origin must be scanned first; subsequent ring stations are selected
-        # greedily from the robot's post-clear position.
-        origin = unvisited.pop(0)
-        self._scan_station(robot, origin)
-        visited.append(origin)
+        first_station = unvisited.pop(0)
+        self._scan_station(robot, first_station)
+        visited.append(first_station)
 
         while unvisited and sum(
             state.detected or state.cleared for state in self.states.values()
@@ -399,9 +451,48 @@ class BatchOmniSearch(AdaptiveOmniSearch):
     tasks are ordered by distance from the robot's current position.
     """
 
-    def _scan_station_deferred(self, robot: RobotInterface, station: Point) -> None:
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        self.enroute_detour_limit_m = float(
+            kwargs.pop("enroute_detour_limit_m", 500.0)
+        )
+        super().__init__(*args, **kwargs)
+
+    def _clear_certified_en_route(
+        self, robot: RobotInterface, unvisited: list[Point]
+    ) -> None:
+        """Insert cheap certified clears into the still-required survey route."""
+
+        while unvisited:
+            direct_to_survey = min(robot.position.distance_to(point) for point in unvisited)
+            choices: list[tuple[float, Point, ChannelState]] = []
+            for state in self.states.values():
+                if not state.detected or state.cleared:
+                    continue
+                radius_m, centre = _region_radius_and_center(state)
+                if radius_m > CLEAR_RADIUS_M + 1e-7:
+                    continue
+                detour = (
+                    robot.position.distance_to(centre)
+                    + min(centre.distance_to(point) for point in unvisited)
+                    - direct_to_survey
+                )
+                choices.append((detour, centre, state))
+            if not choices:
+                return
+            detour, centre, state = min(choices, key=lambda item: item[0])
+            if detour > self.enroute_detour_limit_m:
+                return
+            if not self._clear(robot, centre, state):
+                raise RuntimeError(
+                    f"Guaranteed en-route clear failed for channel {state.channel}."
+                )
+
+    def _scan_station_deferred(self, robot: RobotInterface, station: Point) -> int:
+        detected_before = sum(state.detected for state in self.states.values())
         channels = [
-            channel for channel, state in self.states.items() if not state.cleared
+            channel
+            for channel, state in self.states.items()
+            if not state.cleared and len(state.observations) < 2
         ]
         current_channel = getattr(robot, "current_channel", None)
         if current_channel in channels:
@@ -421,6 +512,7 @@ class BatchOmniSearch(AdaptiveOmniSearch):
                     float(reply.bearing_deg),
                     self.circle_sides,
                 )
+        return sum(state.detected for state in self.states.values()) - detected_before
 
     def run(self, robot: RobotInterface) -> StrategyResult:
         if survey_covering_radius_m() > MIN_RECEPTION_RADIUS_M + 1e-9:
@@ -428,14 +520,14 @@ class BatchOmniSearch(AdaptiveOmniSearch):
 
         unvisited = list(survey_stations())
         visited: list[Point] = []
-        origin = unvisited.pop(0)
-        self._scan_station_deferred(robot, origin)
-        visited.append(origin)
+        first_station = unvisited.pop(0)
+        self._scan_station_deferred(robot, first_station)
+        visited.append(first_station)
         while unvisited and sum(
             state.detected or state.cleared for state in self.states.values()
         ) < self.max_sources:
-            station = min(unvisited, key=robot.position.distance_to)
-            unvisited.remove(station)
+            self._clear_certified_en_route(robot, unvisited)
+            station = unvisited.pop(0)
             self._scan_station_deferred(robot, station)
             visited.append(station)
 
@@ -443,12 +535,7 @@ class BatchOmniSearch(AdaptiveOmniSearch):
             state for state in self.states.values() if state.detected and not state.cleared
         ]
         while unresolved:
-            state = min(
-                unresolved,
-                key=lambda item: robot.position.distance_to(
-                    _region_radius_and_center(item)[1]
-                ),
-            )
+            state = _plan_open_route(robot.position, unresolved)[0]
             unresolved.remove(state)
             self._resolve_channel(robot, state)
 
