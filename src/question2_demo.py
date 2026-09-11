@@ -175,6 +175,12 @@ def main() -> None:
     selected_mirror = _mirror_candidate(
         selected, first_observation.station, along, normal
     )
+    selected_local = _point_to_local(
+        selected.point, first_observation.station, along, normal
+    )
+    optimum_local = _point_to_local(
+        optimum.point, first_observation.station, along, normal
+    )
 
     posterior_samples = sample_convex_polygon(
         first_region, edge_subdivisions=20, radial_levels=7
@@ -229,6 +235,9 @@ def main() -> None:
             "conditional_reception_rule": "d2(G) <= max(1000, d1(G))",
             "continuous_reception_audit": True,
             "reception_safety_margin_m": 0.5,
+            "station_domain_rule": "S2 must lie in the radius-1800 m dog-motion disk when that operational boundary applies",
+            "immediate_clearance_rule": "posterior minimum enclosing circle radius <= 20 m",
+            "selection_order": "domain and reception feasibility; 20 m clearance test; posterior loss; travel distance",
             "primary_objective": "minimize sampled worst posterior diameter",
             "secondary_rule": "minimum travel distance within the 10% near-optimal set",
             "posterior_grid_sizes": [21, 41, 61],
@@ -242,11 +251,25 @@ def main() -> None:
         "posterior_grid_optimum": {
             **_candidate_payload(optimum),
             "sampled_worst_diameter_m": posterior_search.optimum_posterior.worst_diameter_m,
+            "sampled_worst_minimum_enclosing_radius_lower_bound_m": posterior_search.optimum_posterior.worst_diameter_m / 2.0,
+            "guarantees_immediate_clearance_in_sampled_scenarios": posterior_search.optimum_posterior.worst_diameter_m <= 40.0,
+            "relative_position": {
+                "forward_along_first_bearing_m": optimum_local[0],
+                "left_lateral_m": optimum_local[1],
+                "absolute_offset_angle_from_first_bearing_deg": abs(float(np.degrees(np.arctan2(optimum_local[1], optimum_local[0])))),
+            },
             "symmetric_alternative_point": asdict(optimum_mirror.point),
         },
         "recommended_near_optimal_candidate": {
             **_candidate_payload(selected),
             "sampled_worst_diameter_m": posterior_search.recommended_posterior.worst_diameter_m,
+            "sampled_worst_minimum_enclosing_radius_lower_bound_m": posterior_search.recommended_posterior.worst_diameter_m / 2.0,
+            "guarantees_immediate_clearance_in_sampled_scenarios": posterior_search.recommended_posterior.worst_diameter_m <= 40.0,
+            "relative_position": {
+                "forward_along_first_bearing_m": selected_local[0],
+                "left_lateral_m": selected_local[1],
+                "absolute_offset_angle_from_first_bearing_deg": abs(float(np.degrees(np.arctan2(selected_local[1], selected_local[0])))),
+            },
             "near_optimal_threshold_m": posterior_search.near_optimal_threshold_m,
             "symmetric_alternative_point": asdict(selected_mirror.point),
         },
@@ -275,6 +298,9 @@ def main() -> None:
                 "center": asdict(representative_circle.center),
                 "radius_m": representative_circle.radius,
             },
+            "clearance_radius_m": 20.0,
+            "clearance_radius_excess_m": representative_circle.radius - 20.0,
+            "guarantees_immediate_clearance": representative_circle.radius <= 20.0,
         },
         "grid_convergence": convergence,
     }

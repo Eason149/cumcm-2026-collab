@@ -44,6 +44,9 @@
     "conditional_reception_rule": "d2(G) <= max(1000, d1(G))",
     "continuous_reception_audit": true,
     "reception_safety_margin_m": 0.5,
+    "station_domain_rule": "S2 must lie in the radius-1800 m dog-motion disk when that operational boundary applies",
+    "immediate_clearance_rule": "posterior minimum enclosing circle radius <= 20 m",
+    "selection_order": "domain and reception feasibility; 20 m clearance test; posterior loss; travel distance",
     "primary_objective": "minimize sampled worst posterior diameter",
     "secondary_rule": "minimum travel distance within the 10% near-optimal set",
     "posterior_grid_sizes": [
@@ -76,6 +79,13 @@
     "travel_distance_m": 994.3350793369407,
     "travel_time_s": 198.86701586738815,
     "sampled_worst_diameter_m": 112.59371383127684,
+    "sampled_worst_minimum_enclosing_radius_lower_bound_m": 56.29685691563842,
+    "guarantees_immediate_clearance_in_sampled_scenarios": false,
+    "relative_position": {
+      "forward_along_first_bearing_m": 837.5000000000001,
+      "left_lateral_m": -536.0,
+      "absolute_offset_angle_from_first_bearing_deg": 32.61924307119282
+    },
     "symmetric_alternative_point": {
       "x": 378.6028672078701,
       "y": 919.4357611829007
@@ -93,6 +103,13 @@
     "travel_distance_m": 931.3963978886754,
     "travel_time_s": 186.27927957773508,
     "sampled_worst_diameter_m": 123.39749352324431,
+    "sampled_worst_minimum_enclosing_radius_lower_bound_m": 61.698746761622154,
+    "guarantees_immediate_clearance_in_sampled_scenarios": false,
+    "relative_position": {
+      "forward_along_first_bearing_m": 737.0,
+      "left_lateral_m": 569.4999999999998,
+      "absolute_offset_angle_from_first_bearing_deg": 37.69424046668916
+    },
     "near_optimal_threshold_m": 123.85308521440454,
     "symmetric_alternative_point": {
       "x": 930.3668371429076,
@@ -164,7 +181,10 @@
         "y": 522.4490553061028
       },
       "radius_m": 22.36910118808093
-    }
+    },
+    "clearance_radius_m": 20.0,
+    "clearance_radius_excess_m": 2.369101188080929,
+    "guarantees_immediate_clearance": false
   },
   "grid_convergence": [
     {

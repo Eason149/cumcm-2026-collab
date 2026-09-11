@@ -132,6 +132,33 @@ class Question2StrategyTests(unittest.TestCase):
             result.optimum.travel_distance_m + 1e-7,
         )
 
+    def test_posterior_search_respects_dog_motion_disk(self) -> None:
+        domain_center = Point(0.0, 0.0)
+        result = search_posterior_optimal_candidates(
+            self.observation,
+            self.region,
+            grid_size=21,
+            source_edge_subdivisions=3,
+            source_radial_levels=2,
+            measurement_errors_deg=(-1.0, 0.0, 1.0),
+            station_domain_center=domain_center,
+            station_domain_radius_m=950.0,
+        )
+        self.assertLessEqual(result.optimum.point.distance_to(domain_center), 950.0)
+        self.assertLessEqual(
+            result.recommended.point.distance_to(domain_center), 950.0
+        )
+
+    def test_station_domain_arguments_must_be_paired(self) -> None:
+        with self.assertRaises(ValueError):
+            search_posterior_optimal_candidates(
+                self.observation,
+                self.region,
+                grid_size=11,
+                station_domain_center=None,
+                station_domain_radius_m=1800.0,
+            )
+
     def test_robust_candidate_reduces_sampled_worst_posterior(self) -> None:
         grid = search_second_station_candidates(
             self.observation,

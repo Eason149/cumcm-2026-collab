@@ -656,21 +656,32 @@ def search_posterior_optimal_candidates(
     prior_lower_radius_m: float = 1000.0,
     reception_safety_margin_m: float = 0.5,
     near_optimal_fraction: float = 0.10,
+    station_domain_center: Point | None = Point(0.0, 0.0),
+    station_domain_radius_m: float | None = 1800.0,
 ) -> PosteriorGrid:
     """Search the conditional reception domain using posterior diameter.
 
     The grid covers every conditionally feasible station because source points
     arbitrarily close to the first station force the second station to lie no
-    farther than approximately the prior lower reception radius.  The returned
-    optimum is a deterministic-grid result, not a claim of continuous global
-    optimality.  Within the 10% (configurable) near-optimal set, travel distance
-    from the first station is the secondary criterion.
+    farther than approximately the prior lower reception radius.  When a
+    station-domain disk is supplied, out-of-domain grid points are rejected
+    before reception and posterior evaluation.  Set both domain arguments to
+    ``None`` only when the target disk constrains sources but not dog motion.
+    The returned optimum is a deterministic-grid result, not a claim of
+    continuous global optimality.  Within the 10% (configurable) near-optimal
+    set, travel distance from the first station is the secondary criterion.
     """
 
     if grid_size < 11:
         raise ValueError("grid_size must be at least 11.")
     if near_optimal_fraction < 0.0:
         raise ValueError("near_optimal_fraction must be non-negative.")
+    if (station_domain_center is None) != (station_domain_radius_m is None):
+        raise ValueError(
+            "station_domain_center and station_domain_radius_m must both be set or both be None."
+        )
+    if station_domain_radius_m is not None and station_domain_radius_m <= 0.0:
+        raise ValueError("station_domain_radius_m must be positive.")
     samples = sample_convex_polygon(
         first_region,
         edge_subdivisions=source_edge_subdivisions,
@@ -695,6 +706,13 @@ def search_posterior_optimal_candidates(
                 + float(along) * direction.y
                 + float(lateral) * normal.y,
             )
+            if (
+                station_domain_center is not None
+                and station_domain_radius_m is not None
+                and point.distance_to(station_domain_center)
+                > station_domain_radius_m + 1e-9
+            ):
+                continue
             reception = conditional_reception_evaluation(
                 point,
                 first_observation.station,
