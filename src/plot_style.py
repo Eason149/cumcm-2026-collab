@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from matplotlib import pyplot as plt
+from PIL import Image
 
 
 PALETTE = {
@@ -45,7 +46,15 @@ def apply_publication_style() -> None:
             "grid.linewidth": 0.7,
             "xtick.color": PALETTE["ink"],
             "ytick.color": PALETTE["ink"],
-            "font.family": "DejaVu Sans",
+            "font.family": "sans-serif",
+            "font.sans-serif": [
+                "Microsoft YaHei",
+                "Noto Sans CJK SC",
+                "Source Han Sans SC",
+                "SimHei",
+                "DejaVu Sans",
+            ],
+            "axes.unicode_minus": False,
             "font.size": 8.5,
             "axes.labelsize": 9.0,
             "axes.titlesize": 10.0,
@@ -89,8 +98,12 @@ def style_axis(axis, *, grid: bool = True) -> None:
 
 
 def save_publication_figure(figure, png_path, *, dpi: int = 400) -> None:
-    """Save a high-resolution preview and a vector PDF with identical layout."""
+    """Save high-resolution, vector, and grayscale-review figure files."""
 
     png_path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(png_path, dpi=dpi)
     figure.savefig(png_path.with_suffix(".pdf"))
+    figure.savefig(png_path.with_suffix(".svg"))
+    grayscale_path = png_path.with_name(f"{png_path.stem}_grayscale.png")
+    with Image.open(png_path) as rendered:
+        rendered.convert("L").save(grayscale_path)

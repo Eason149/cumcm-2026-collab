@@ -44,16 +44,21 @@
     "conditional_reception_rule": "d2(G) <= max(1000, d1(G))",
     "continuous_reception_audit": true,
     "reception_safety_margin_m": 0.5,
-    "station_domain_rule": "S2 must lie in the radius-1800 m dog-motion disk when that operational boundary applies",
-    "immediate_clearance_rule": "posterior minimum enclosing circle radius <= 20 m",
-    "selection_order": "domain and reception feasibility; 20 m clearance test; posterior loss; travel distance",
-    "primary_objective": "minimize sampled worst posterior diameter",
-    "secondary_rule": "minimum travel distance within the 10% near-optimal set",
+    "objectives": [
+      "minimize travel distance",
+      "minimize sampled worst posterior diameter"
+    ],
+    "first_priority": "guarantee one-step clearance when any grid point passes exact scenario classification",
+    "secondary_rule": "maximum-distance-to-chord knee on the travel/log-loss Pareto frontier",
     "posterior_grid_sizes": [
       21,
       41,
-      61
+      61,
+      81,
+      101
     ],
+    "grid_convergence_tolerance": 0.001,
+    "grid_convergence_rule": "adjacent optimum relative change below 0.1%",
     "posterior_source_sampling": {
       "edge_subdivisions": 6,
       "radial_levels": 4,
@@ -65,58 +70,59 @@
         1.0
       ]
     },
-    "disclaimer": "posterior optimum is deterministic-grid approximate, not a continuous global bound"
+    "disclaimer": "posterior optimum is deterministic-grid approximate, not a continuous global bound",
+    "station_search_domain": "complete conditional-reception bounds intersected with the radius-1800 m activity disk",
+    "clearance_rule": "diameter/2 lower-bound pruning followed by exact MEC when not pruned",
+    "pareto_loss_scale": "natural logarithm"
   },
   "posterior_grid_optimum": {
     "point": {
-      "x": 993.4768069761914,
-      "y": 41.30476970510148
+      "x": 382.40152654506306,
+      "y": 927.0852367123966
     },
     "guaranteed_visible": true,
-    "maximum_source_distance_m": 990.1752725914585,
-    "minimum_intersection_angle_deg": 31.77094081308853,
-    "conditional_reception_margin_m": 9.824727408541548,
-    "travel_distance_m": 994.3350793369407,
-    "travel_time_s": 198.86701586738815,
-    "sampled_worst_diameter_m": 112.59371383127684,
-    "sampled_worst_minimum_enclosing_radius_lower_bound_m": 56.29685691563842,
-    "guarantees_immediate_clearance_in_sampled_scenarios": false,
-    "relative_position": {
-      "forward_along_first_bearing_m": 837.5000000000001,
-      "left_lateral_m": -536.0,
-      "absolute_offset_angle_from_first_bearing_deg": 32.61924307119282
-    },
+    "maximum_source_distance_m": 998.6934046283533,
+    "minimum_intersection_angle_deg": 31.735226272106633,
+    "conditional_reception_margin_m": 1.306595371646722,
+    "travel_distance_m": 1002.8549065712722,
+    "travel_time_s": 200.57098131425442,
+    "sampled_worst_diameter_m": 111.18684718997912,
+    "clearance_guaranteed_on_grid": false,
+    "clearance_radius_lower_bound_m": 55.59342359498956,
+    "worst_exact_mec_radius_m": 19.656058117831893,
+    "exact_mec_evaluation_count": 133,
+    "diameter_pruned_evaluation_count": 322,
     "symmetric_alternative_point": {
-      "x": 378.6028672078701,
-      "y": 919.4357611829007
+      "x": 1001.9641806950932,
+      "y": 42.258067136176976
     }
   },
-  "recommended_near_optimal_candidate": {
+  "recommended_pareto_knee_candidate": {
     "point": {
-      "x": 277.06327613906626,
-      "y": 889.2329228133017
+      "x": -74.64111277751894,
+      "y": 289.6591422974847
     },
     "guaranteed_visible": true,
-    "maximum_source_distance_m": 967.8085721914832,
-    "minimum_intersection_angle_deg": 36.46223196035205,
-    "conditional_reception_margin_m": 72.50080111012619,
-    "travel_distance_m": 931.3963978886754,
-    "travel_time_s": 186.27927957773508,
-    "sampled_worst_diameter_m": 123.39749352324431,
-    "sampled_worst_minimum_enclosing_radius_lower_bound_m": 61.698746761622154,
-    "guarantees_immediate_clearance_in_sampled_scenarios": false,
-    "relative_position": {
-      "forward_along_first_bearing_m": 737.0,
-      "left_lateral_m": 569.4999999999998,
-      "absolute_offset_angle_from_first_bearing_deg": 37.69424046668916
-    },
-    "near_optimal_threshold_m": 123.85308521440454,
+    "maximum_source_distance_m": 1428.0015983493486,
+    "minimum_intersection_angle_deg": 11.317319595501473,
+    "conditional_reception_margin_m": 36.89984087388904,
+    "travel_distance_m": 299.121571327079,
+    "travel_time_s": 59.824314265415794,
+    "sampled_worst_diameter_m": 381.7127249891844,
+    "clearance_guaranteed_on_grid": false,
+    "clearance_radius_lower_bound_m": 190.8563624945922,
+    "worst_exact_mec_radius_m": 12.78427952740534,
+    "exact_mec_evaluation_count": 82,
+    "diameter_pruned_evaluation_count": 373,
+    "pareto_knee_score": 0.23062501542272068,
     "symmetric_alternative_point": {
-      "x": 930.3668371429076,
-      "y": -43.78125563185972
+      "x": 246.66179446996733,
+      "y": -169.20896424845932
     }
   },
-  "near_optimal_grid_point_count": 52,
+  "pareto_front_grid_point_count": 508,
+  "clearance_feasible_grid_point_count": 0,
+  "selection_mode": "pareto_knee",
   "fixed_1000m_angle_baseline": {
     "positive_candidate": {
       "point": {
@@ -158,14 +164,18 @@
   "sampled_worst_posterior": {
     "source_sample_count": 601,
     "measurement_error_grid_count": 21,
-    "selected_candidate_diameter_m": 123.39749352324431,
+    "selected_candidate_diameter_m": 381.7127249891844,
+    "selected_clearance_guaranteed_on_grid": false,
+    "selected_clearance_radius_lower_bound_m": 190.8563624945922,
+    "selected_exact_mec_evaluation_count": 1788,
+    "selected_diameter_pruned_evaluation_count": 10833,
     "selected_worst_source": {
       "x": 1243.5563588325624,
       "y": 838.7893552061203
     },
     "selected_worst_measurement_error_deg": -1.0,
     "centerline_baseline_diameter_m": 747.616154585073,
-    "relative_reduction": 0.8349453890656898
+    "relative_reduction": 0.48942686344032393
   },
   "representative_source": {
     "point": {
@@ -174,60 +184,105 @@
     },
     "distance_from_first_station_m": 900.0,
     "worst_tested_second_measurement_error_deg": 1.0,
-    "posterior_diameter_m": 44.73820237616186,
+    "posterior_diameter_m": 202.44548691527032,
     "posterior_minimum_enclosing_circle": {
       "center": {
-        "x": 746.613216727941,
-        "y": 522.4490553061028
+        "x": 785.2136619823141,
+        "y": 547.6851954194674
       },
-      "radius_m": 22.36910118808093
-    },
-    "clearance_radius_m": 20.0,
-    "clearance_radius_excess_m": 2.369101188080929,
-    "guarantees_immediate_clearance": false
+      "radius_m": 101.22274345763516
+    }
   },
   "grid_convergence": [
     {
       "grid_size": 21,
-      "evaluated_feasible_count": 115,
+      "evaluated_feasible_count": 118,
       "optimum_point": {
-        "x": 172.76244018434483,
-        "y": 979.7844861302667
+        "x": 175.94801052843678,
+        "y": 977.8488627094889
       },
-      "optimum_sampled_worst_diameter_m": 116.68829633474101,
+      "optimum_sampled_worst_diameter_m": 116.73248764866891,
+      "relative_change_from_previous": null,
+      "converged": false,
       "recommended_point": {
-        "x": 230.40687203762496,
-        "y": 897.4597056792229
+        "x": 258.03322030608774,
+        "y": -185.4490433901305
       },
-      "recommended_sampled_worst_diameter_m": 124.72372035912063
+      "recommended_sampled_worst_diameter_m": 364.0721295572133,
+      "clearance_feasible_grid_count": 0,
+      "selection_mode": "pareto_knee"
     },
     {
       "grid_size": 41,
-      "evaluated_feasible_count": 475,
+      "evaluated_feasible_count": 484,
       "optimum_point": {
-        "x": 411.5384745674706,
-        "y": 901.6015730080994
+        "x": 413.5361044419948,
+        "y": 900.0549193043475
       },
-      "optimum_sampled_worst_diameter_m": 113.5380881992588,
+      "optimum_sampled_worst_diameter_m": 113.68340198641394,
+      "relative_change_from_previous": 0.026120283424712364,
+      "converged": false,
       "recommended_point": {
-        "x": 230.40687203762496,
-        "y": 897.4597056792229
+        "x": 258.03322030608774,
+        "y": -185.4490433901305
       },
-      "recommended_sampled_worst_diameter_m": 124.72372035912063
+      "recommended_sampled_worst_diameter_m": 364.0721295572133,
+      "clearance_feasible_grid_count": 0,
+      "selection_mode": "pareto_knee"
     },
     {
       "grid_size": 61,
-      "evaluated_feasible_count": 1079,
+      "evaluated_feasible_count": 1090,
       "optimum_point": {
-        "x": 993.4768069761914,
-        "y": 41.30476970510148
+        "x": 380.7643558254768,
+        "y": 917.8003801747966
       },
-      "optimum_sampled_worst_diameter_m": 112.59371383127684,
+      "optimum_sampled_worst_diameter_m": 112.72086113289049,
+      "relative_change_from_previous": 0.008466854762478705,
+      "converged": false,
       "recommended_point": {
-        "x": 277.06327613906626,
-        "y": 889.2329228133017
+        "x": -66.99342695950503,
+        "y": 278.73711504029825
       },
-      "recommended_sampled_worst_diameter_m": 123.39749352324431
+      "recommended_sampled_worst_diameter_m": 394.7033311152392,
+      "clearance_feasible_grid_count": 0,
+      "selection_mode": "pareto_knee"
+    },
+    {
+      "grid_size": 81,
+      "evaluated_feasible_count": 1946,
+      "optimum_point": {
+        "x": 399.19669353321865,
+        "y": 920.5337204115723
+      },
+      "optimum_sampled_worst_diameter_m": 111.18755780177192,
+      "relative_change_from_previous": 0.013602658067976526,
+      "converged": false,
+      "recommended_point": {
+        "x": -71.77323059576372,
+        "y": 285.5633820760398
+      },
+      "recommended_sampled_worst_diameter_m": 386.4709698954946,
+      "clearance_feasible_grid_count": 0,
+      "selection_mode": "pareto_knee"
+    },
+    {
+      "grid_size": 101,
+      "evaluated_feasible_count": 3033,
+      "optimum_point": {
+        "x": 382.40152654506306,
+        "y": 927.0852367123966
+      },
+      "optimum_sampled_worst_diameter_m": 111.18684718997912,
+      "relative_change_from_previous": 6.3911089230363275e-06,
+      "converged": true,
+      "recommended_point": {
+        "x": -74.64111277751894,
+        "y": 289.6591422974847
+      },
+      "recommended_sampled_worst_diameter_m": 381.7127249891844,
+      "clearance_feasible_grid_count": 0,
+      "selection_mode": "pareto_knee"
     }
   ]
 }

@@ -7,6 +7,8 @@ import sys
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -112,7 +114,7 @@ class Question2StrategyTests(unittest.TestCase):
             ) - source.distance_to(candidate)
             self.assertGreaterEqual(sampled_margin + 1e-6, audit.minimum_margin_m)
 
-    def test_posterior_search_uses_loss_then_near_optimal_travel(self) -> None:
+    def test_posterior_search_uses_pareto_knee(self) -> None:
         result = search_posterior_optimal_candidates(
             self.observation,
             self.region,
@@ -124,30 +126,69 @@ class Question2StrategyTests(unittest.TestCase):
         self.assertTrue(result.optimum.guaranteed_visible)
         self.assertTrue(result.recommended.guaranteed_visible)
         self.assertLessEqual(
-            result.recommended_posterior.worst_diameter_m,
-            result.near_optimal_threshold_m + 1e-7,
-        )
-        self.assertLessEqual(
             result.recommended.travel_distance_m,
             result.optimum.travel_distance_m + 1e-7,
         )
+        self.assertGreaterEqual(
+            result.recommended_posterior.worst_diameter_m,
+            result.optimum_posterior.worst_diameter_m - 1e-7,
+        )
+        self.assertEqual(result.selection_mode, "pareto_knee")
+        self.assertGreater(result.pareto_front_count, 2)
+        self.assertEqual(
+            result.pareto_front_count, int(np.count_nonzero(result.pareto_mask))
+        )
+        self.assertGreater(result.pareto_knee_score, 0.0)
+        along_grid, lateral_grid = np.meshgrid(
+            result.along_values_m, result.lateral_values_m
+        )
+        distances = np.hypot(along_grid, lateral_grid)
+        recommended_distance = result.recommended.travel_distance_m
+        recommended_loss = result.recommended_posterior.worst_diameter_m
+        dominates_recommendation = (
+            result.feasible_mask
+            & (distances <= recommended_distance + 1e-7)
+            & (result.losses_m <= recommended_loss + 1e-7)
+            & (
+                (distances < recommended_distance - 1e-7)
+                | (result.losses_m < recommended_loss - 1e-7)
+            )
+        )
+        self.assertFalse(np.any(dominates_recommendation))
+        self.assertFalse(result.recommended_posterior.clearance_guaranteed)
+        self.assertGreater(
+            result.recommended_posterior.diameter_pruned_evaluation_count, 0
+        )
+        self.assertGreater(
+            result.recommended_posterior.exact_mec_evaluation_count, 0
+        )
+        self.assertGreaterEqual(
+            result.recommended_posterior.clearance_radius_lower_bound_m,
+            result.recommended_posterior.worst_diameter_m / 2.0,
+        )
 
-    def test_posterior_search_respects_dog_motion_disk(self) -> None:
-        domain_center = Point(0.0, 0.0)
+    def test_full_activity_domain_bounds_cover_off_center_case(self) -> None:
+        observation = Observation(Point(-3000.0, 0.0), 0.0)
+        region = first_source_region(observation, circle_sides=180)
         result = search_posterior_optimal_candidates(
-            self.observation,
-            self.region,
-            grid_size=21,
-            source_edge_subdivisions=3,
+            observation,
+            region,
+            grid_size=11,
+            source_edge_subdivisions=2,
             source_radial_levels=2,
-            measurement_errors_deg=(-1.0, 0.0, 1.0),
-            station_domain_center=domain_center,
-            station_domain_radius_m=950.0,
+            measurement_errors_deg=(0.0,),
+            station_domain_center=Point(0.0, 0.0),
+            station_domain_radius_m=1800.0,
         )
-        self.assertLessEqual(result.optimum.point.distance_to(domain_center), 950.0)
-        self.assertLessEqual(
-            result.recommended.point.distance_to(domain_center), 950.0
+        self.assertGreater(result.along_values_m[-1], 1005.0)
+        along_grid, lateral_grid = np.meshgrid(
+            result.along_values_m, result.lateral_values_m
         )
+        for along, lateral in zip(
+            along_grid[result.feasible_mask], lateral_grid[result.feasible_mask]
+        ):
+            point = Point(observation.station.x + along, lateral)
+            self.assertLessEqual(point.distance_to(Point(0.0, 0.0)), 1800.0 + 1e-7)
 
     def test_station_domain_arguments_must_be_paired(self) -> None:
         with self.assertRaises(ValueError):
@@ -155,6 +196,9 @@ class Question2StrategyTests(unittest.TestCase):
                 self.observation,
                 self.region,
                 grid_size=11,
+                source_edge_subdivisions=2,
+                source_radial_levels=2,
+                measurement_errors_deg=(0.0,),
                 station_domain_center=None,
                 station_domain_radius_m=1800.0,
             )

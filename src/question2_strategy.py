@@ -55,6 +55,11 @@ class PosteriorEvaluation:
     worst_source: Point
     worst_measurement_error_deg: float
     worst_polygon: tuple[Point, ...]
+    clearance_guaranteed: bool
+    clearance_radius_lower_bound_m: float
+    worst_exact_mec_radius_m: float
+    exact_mec_evaluation_count: int
+    diameter_pruned_evaluation_count: int
 
 
 @dataclass(frozen=True)
@@ -74,14 +79,17 @@ class PosteriorGrid:
     along_values_m: np.ndarray
     lateral_values_m: np.ndarray
     losses_m: np.ndarray
+    clearance_feasible_mask: np.ndarray
     feasible_mask: np.ndarray
-    near_optimal_mask: np.ndarray
+    pareto_mask: np.ndarray
     optimum: CandidateEvaluation
     recommended: CandidateEvaluation
     optimum_posterior: PosteriorEvaluation
     recommended_posterior: PosteriorEvaluation
-    near_optimal_threshold_m: float
+    pareto_knee_score: float
+    pareto_front_count: int
     evaluated_count: int
+    selection_mode: str
 
 
 def _unit(angle_deg: float) -> Point:
@@ -615,10 +623,23 @@ def worst_posterior_diameter(
     source_samples: Sequence[Point],
     measurement_errors_deg: Sequence[float] = (-1.0, -0.5, 0.0, 0.5, 1.0),
     bearing_error_bound_deg: float = 1.0,
+    clearance_radius_m: float = 20.0,
 ) -> PosteriorEvaluation:
-    """Enumerate source/error scenarios and return the largest posterior diameter."""
+    """Return worst posterior diameter and an exact clearance classification.
+
+    Every non-``near`` scenario is classified against the clearance radius.  A
+    posterior with ``diameter / 2 > clearance_radius_m`` is rejected by a
+    rigorous lower bound.  Only the remaining scenarios need an exact minimum
+    enclosing circle, so the Boolean clearance result is exact on the supplied
+    source/error grid without paying for unnecessary circle enumeration.
+    """
 
     worst: PosteriorEvaluation | None = None
+    clearance_guaranteed = True
+    clearance_radius_lower_bound = 0.0
+    worst_exact_mec_radius = 0.0
+    exact_mec_count = 0
+    diameter_pruned_count = 0
     for source in source_samples:
         if source.distance_to(second_station) <= 5.0:
             diameter = 0.0
@@ -638,12 +659,95 @@ def worst_posterior_diameter(
                 if not polygon:
                     raise RuntimeError("A consistent source was lost during polygon clipping.")
                 diameter, _ = polygon_diameter(polygon)
-            evaluation = PosteriorEvaluation(diameter, source, error, tuple(polygon))
+            radius_lower_bound = diameter / 2.0
+            if radius_lower_bound > clearance_radius_m + 1e-9:
+                clearance_guaranteed = False
+                diameter_pruned_count += 1
+                clearance_radius_lower_bound = max(
+                    clearance_radius_lower_bound, radius_lower_bound
+                )
+            else:
+                circle = minimum_enclosing_circle(polygon)
+                exact_mec_count += 1
+                worst_exact_mec_radius = max(worst_exact_mec_radius, circle.radius)
+                clearance_radius_lower_bound = max(
+                    clearance_radius_lower_bound, circle.radius
+                )
+                if circle.radius > clearance_radius_m + 1e-9:
+                    clearance_guaranteed = False
+            evaluation = PosteriorEvaluation(
+                diameter,
+                source,
+                error,
+                tuple(polygon),
+                clearance_guaranteed,
+                clearance_radius_lower_bound,
+                worst_exact_mec_radius,
+                exact_mec_count,
+                diameter_pruned_count,
+            )
             if worst is None or evaluation.worst_diameter_m > worst.worst_diameter_m:
                 worst = evaluation
     if worst is None:
         raise ValueError("source_samples must not be empty.")
-    return worst
+    return PosteriorEvaluation(
+        worst.worst_diameter_m,
+        worst.worst_source,
+        worst.worst_measurement_error_deg,
+        worst.worst_polygon,
+        clearance_guaranteed,
+        clearance_radius_lower_bound,
+        worst_exact_mec_radius,
+        exact_mec_count,
+        diameter_pruned_count,
+    )
+
+
+def _complete_station_search_bounds(
+    first_observation: Observation,
+    first_region: Sequence[Point],
+    prior_lower_radius_m: float,
+    direction: Point,
+    normal: Point,
+    station_domain_center: Point | None,
+    station_domain_radius_m: float | None,
+) -> tuple[float, float, float, float]:
+    """Return local-coordinate bounds containing every feasible station.
+
+    A conditionally feasible station must lie in the reception disk associated
+    with every possible source.  Any one source point therefore supplies a
+    valid enclosing disk.  We choose the region vertex whose compatible
+    reception disk is smallest, then intersect its local bounding box with the
+    optional station-domain disk bounding box.
+    """
+
+    station = first_observation.station
+
+    def local_coordinates(point: Point) -> tuple[float, float]:
+        dx, dy = point.x - station.x, point.y - station.y
+        return dx * direction.x + dy * direction.y, dx * normal.x + dy * normal.y
+
+    anchor = min(
+        first_region,
+        key=lambda point: max(prior_lower_radius_m, point.distance_to(station)),
+    )
+    anchor_radius = max(prior_lower_radius_m, anchor.distance_to(station))
+    anchor_along, anchor_lateral = local_coordinates(anchor)
+    along_min = anchor_along - anchor_radius
+    along_max = anchor_along + anchor_radius
+    lateral_min = anchor_lateral - anchor_radius
+    lateral_max = anchor_lateral + anchor_radius
+
+    if station_domain_center is not None and station_domain_radius_m is not None:
+        center_along, center_lateral = local_coordinates(station_domain_center)
+        along_min = max(along_min, center_along - station_domain_radius_m)
+        along_max = min(along_max, center_along + station_domain_radius_m)
+        lateral_min = max(lateral_min, center_lateral - station_domain_radius_m)
+        lateral_max = min(lateral_max, center_lateral + station_domain_radius_m)
+
+    if along_min > along_max or lateral_min > lateral_max:
+        raise RuntimeError("Station domain and conditional reception region do not overlap.")
+    return along_min, along_max, lateral_min, lateral_max
 
 
 def search_posterior_optimal_candidates(
@@ -655,27 +759,24 @@ def search_posterior_optimal_candidates(
     measurement_errors_deg: Sequence[float] = (-1.0, -0.5, 0.0, 0.5, 1.0),
     prior_lower_radius_m: float = 1000.0,
     reception_safety_margin_m: float = 0.5,
-    near_optimal_fraction: float = 0.10,
+    clearance_radius_m: float = 20.0,
     station_domain_center: Point | None = Point(0.0, 0.0),
     station_domain_radius_m: float | None = 1800.0,
 ) -> PosteriorGrid:
     """Search the conditional reception domain using posterior diameter.
 
-    The grid covers every conditionally feasible station because source points
-    arbitrarily close to the first station force the second station to lie no
-    farther than approximately the prior lower reception radius.  When a
-    station-domain disk is supplied, out-of-domain grid points are rejected
-    before reception and posterior evaluation.  Set both domain arguments to
-    ``None`` only when the target disk constrains sources but not dog motion.
+    The local Cartesian bounds contain the complete conditional-reception
+    region and are intersected with the optional circular activity domain.
     The returned optimum is a deterministic-grid result, not a claim of
-    continuous global optimality.  Within the 10% (configurable) near-optimal
-    set, travel distance from the first station is the secondary criterion.
+    continuous global optimality. If any grid point guarantees clearance it
+    is preferred; otherwise the recommendation is the maximum-distance-to-chord
+    knee of the travel-distance/log-posterior-loss Pareto frontier.
     """
 
     if grid_size < 11:
         raise ValueError("grid_size must be at least 11.")
-    if near_optimal_fraction < 0.0:
-        raise ValueError("near_optimal_fraction must be non-negative.")
+    if clearance_radius_m <= 0.0:
+        raise ValueError("clearance_radius_m must be positive.")
     if (station_domain_center is None) != (station_domain_radius_m is None):
         raise ValueError(
             "station_domain_center and station_domain_radius_m must both be set or both be None."
@@ -687,13 +788,22 @@ def search_posterior_optimal_candidates(
         edge_subdivisions=source_edge_subdivisions,
         radial_levels=source_radial_levels,
     )
-    halfwidth = prior_lower_radius_m + 5.0
-    along_values = np.linspace(-halfwidth, halfwidth, grid_size)
-    lateral_values = np.linspace(-halfwidth, halfwidth, grid_size)
     direction = _unit(first_observation.bearing_deg)
     normal = Point(-direction.y, direction.x)
+    along_min, along_max, lateral_min, lateral_max = _complete_station_search_bounds(
+        first_observation,
+        first_region,
+        prior_lower_radius_m,
+        direction,
+        normal,
+        station_domain_center,
+        station_domain_radius_m,
+    )
+    along_values = np.linspace(along_min, along_max, grid_size)
+    lateral_values = np.linspace(lateral_min, lateral_max, grid_size)
     losses = np.full((grid_size, grid_size), np.nan, dtype=float)
     feasible = np.zeros((grid_size, grid_size), dtype=bool)
+    clearance_feasible = np.zeros((grid_size, grid_size), dtype=bool)
     evaluations: dict[tuple[int, int], tuple[CandidateEvaluation, PosteriorEvaluation]] = {}
 
     for row, lateral in enumerate(lateral_values):
@@ -727,6 +837,7 @@ def search_posterior_optimal_candidates(
                 point,
                 samples,
                 measurement_errors_deg=measurement_errors_deg,
+                clearance_radius_m=clearance_radius_m,
             )
             candidate = CandidateEvaluation(
                 point=point,
@@ -740,38 +851,90 @@ def search_posterior_optimal_candidates(
             )
             feasible[row, column] = True
             losses[row, column] = posterior.worst_diameter_m
+            clearance_feasible[row, column] = posterior.clearance_guaranteed
             evaluations[(row, column)] = (candidate, posterior)
 
     if not evaluations:
         raise RuntimeError("The posterior grid found no conditionally feasible point.")
-    optimum_index = min(evaluations, key=lambda index: losses[index])
-    optimum_loss = float(losses[optimum_index])
-    threshold = (1.0 + near_optimal_fraction) * optimum_loss
-    near_optimal = feasible & (losses <= threshold + 1e-9)
-    near_indices = [index for index in evaluations if near_optimal[index]]
-    recommended_index = min(
-        near_indices,
-        key=lambda index: (
-            evaluations[index][0].travel_distance_m,
-            losses[index],
-            evaluations[index][0].point.x,
-            evaluations[index][0].point.y,
-        ),
-    )
+    clearance_indices = [
+        index for index in evaluations if evaluations[index][1].clearance_guaranteed
+    ]
+    if clearance_indices:
+        selection_mode = "guaranteed_clearance"
+        recommended_index = min(
+            clearance_indices,
+            key=lambda index: (
+                evaluations[index][0].travel_distance_m,
+                -evaluations[index][0].reception_margin_m,
+                losses[index],
+                evaluations[index][0].point.x,
+                evaluations[index][0].point.y,
+            ),
+        )
+        optimum_index = recommended_index
+        pareto = clearance_feasible.copy()
+        knee_score = 0.0
+    else:
+        selection_mode = "pareto_knee"
+        optimum_index = min(evaluations, key=lambda index: losses[index])
+        pareto = np.zeros_like(feasible)
+        ordered = sorted(
+            evaluations,
+            key=lambda index: (
+                evaluations[index][0].travel_distance_m,
+                losses[index],
+                evaluations[index][0].point.x,
+                evaluations[index][0].point.y,
+            ),
+        )
+        best_loss = float("inf")
+        pareto_indices: list[tuple[int, int]] = []
+        for index in ordered:
+            loss = float(losses[index])
+            if loss < best_loss - 1e-9:
+                pareto_indices.append(index)
+                pareto[index] = True
+                best_loss = loss
+
+        distances = np.asarray(
+            [evaluations[index][0].travel_distance_m for index in pareto_indices],
+            dtype=float,
+        )
+        pareto_losses = np.asarray(
+            [losses[index] for index in pareto_indices], dtype=float
+        )
+        distance_span = float(np.ptp(distances))
+        log_losses = np.log(pareto_losses)
+        log_loss_span = float(np.ptp(log_losses))
+        if distance_span <= 1e-12 or log_loss_span <= 1e-12:
+            recommended_index = pareto_indices[0]
+            knee_score = 0.0
+        else:
+            normalized_distance = (distances - distances.min()) / distance_span
+            normalized_log_loss = (
+                (log_losses - log_losses.min()) / log_loss_span
+            )
+            knee_scores = 1.0 - normalized_distance - normalized_log_loss
+            knee_position = int(np.argmax(knee_scores))
+            recommended_index = pareto_indices[knee_position]
+            knee_score = float(knee_scores[knee_position])
     optimum, optimum_posterior = evaluations[optimum_index]
     recommended, recommended_posterior = evaluations[recommended_index]
     return PosteriorGrid(
         along_values_m=along_values,
         lateral_values_m=lateral_values,
         losses_m=losses,
+        clearance_feasible_mask=clearance_feasible,
         feasible_mask=feasible,
-        near_optimal_mask=near_optimal,
+        pareto_mask=pareto,
         optimum=optimum,
         recommended=recommended,
         optimum_posterior=optimum_posterior,
         recommended_posterior=recommended_posterior,
-        near_optimal_threshold_m=threshold,
+        pareto_knee_score=knee_score,
+        pareto_front_count=int(np.count_nonzero(pareto)),
         evaluated_count=len(evaluations),
+        selection_mode=selection_mode,
     )
 
 

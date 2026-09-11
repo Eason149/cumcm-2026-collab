@@ -1,0 +1,414 @@
+{
+  "continuous_optimizer_audit": {
+    "method": "differential_evolution",
+    "runs": [
+      {
+        "seed": 2026,
+        "point": {
+          "x": 379.6668322206909,
+          "y": 929.0685968741236
+        },
+        "sampled_worst_diameter_m": 111.05142821145863,
+        "reception_margin_m": 0.501378272879947,
+        "function_evaluations": 600,
+        "dense_worst_diameter_m": 111.05142821411178,
+        "dense_scenario_count": 12621
+      },
+      {
+        "seed": 149,
+        "point": {
+          "x": 373.65028367596676,
+          "y": 931.4326875731449
+        },
+        "sampled_worst_diameter_m": 111.05999609888795,
+        "reception_margin_m": 0.5500616640600811,
+        "function_evaluations": 540
+      }
+    ],
+    "best": {
+      "seed": 2026,
+      "point": {
+        "x": 379.6668322206909,
+        "y": 929.0685968741236
+      },
+      "sampled_worst_diameter_m": 111.05142821145863,
+      "reception_margin_m": 0.501378272879947,
+      "function_evaluations": 600,
+      "dense_worst_diameter_m": 111.05142821411178,
+      "dense_scenario_count": 12621
+    },
+    "two_seed_objective_spread_m": 0.00856788742932224
+  },
+  "grid_vs_continuous_relative_gap": 0.0012194258165021399,
+  "continuous_pareto_audit": {
+    "method": "epsilon-constrained differential evolution in continuous polar coordinates",
+    "coarse_budget_count": 13,
+    "adaptive_budget_count": 6,
+    "frontier": [
+      {
+        "movement_budget_m": 0.0,
+        "seed": 6100,
+        "point": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "distance_m": 0.0,
+        "loss_m": 1495.2292561363993,
+        "reception_margin_m": 0.0,
+        "function_evaluations": 1,
+        "knee_score": 0.0
+      },
+      {
+        "movement_budget_m": 83.57124221427269,
+        "seed": 6101,
+        "point": {
+          "x": 55.956182483514496,
+          "y": -61.922401001105904
+        },
+        "distance_m": 83.4594398727318,
+        "loss_m": 833.5732653245805,
+        "reception_margin_m": 3.592579031185734,
+        "function_evaluations": 150,
+        "knee_score": 0.14162165834611595
+      },
+      {
+        "movement_budget_m": 167.14248442854537,
+        "seed": 6102,
+        "point": {
+          "x": 123.39806672353542,
+          "y": -112.58103617419494
+        },
+        "distance_m": 167.03763820517065,
+        "loss_m": 574.7102931570781,
+        "reception_margin_m": 13.135915040274279,
+        "function_evaluations": 150,
+        "knee_score": 0.20136261015225498
+      },
+      {
+        "movement_budget_m": 250.71372664281807,
+        "seed": 6103,
+        "point": {
+          "x": -66.47061214518023,
+          "y": 241.63415831239178
+        },
+        "distance_m": 250.61007310619618,
+        "loss_m": 436.599263251319,
+        "reception_margin_m": 32.40224239925182,
+        "function_evaluations": 160,
+        "knee_score": 0.2237778136656131
+      },
+      {
+        "movement_budget_m": 271.6065371963862,
+        "seed": 7100,
+        "point": {
+          "x": -76.39162221074116,
+          "y": 260.61325767578455
+        },
+        "distance_m": 271.5786258533125,
+        "loss_m": 411.02772919932136,
+        "reception_margin_m": 30.34476710189814,
+        "function_evaluations": 170,
+        "knee_score": 0.2260900612070692
+      },
+      {
+        "movement_budget_m": 292.4993477499544,
+        "seed": 2026,
+        "point": {
+          "x": -72.4624878348338,
+          "y": 283.05780812203335
+        },
+        "distance_m": 292.18578829584317,
+        "loss_m": 388.767729854948,
+        "reception_margin_m": 37.010045743396155,
+        "function_evaluations": 240,
+        "knee_score": 0.22696308064765824
+      },
+      {
+        "movement_budget_m": 313.3921583035226,
+        "seed": 7102,
+        "point": {
+          "x": -80.78249100293445,
+          "y": 302.7423095897091
+        },
+        "distance_m": 313.3348318785361,
+        "loss_m": 368.0411309022474,
+        "reception_margin_m": 35.48144346293,
+        "function_evaluations": 190,
+        "knee_score": 0.22695262252788279
+      },
+      {
+        "movement_budget_m": 334.28496885709075,
+        "seed": 6104,
+        "point": {
+          "x": 277.13690814356306,
+          "y": -186.83438029595013
+        },
+        "distance_m": 334.2333788177737,
+        "loss_m": 349.501670479556,
+        "reception_margin_m": 39.01672288528027,
+        "function_evaluations": 150,
+        "knee_score": 0.22599862597537496
+      },
+      {
+        "movement_budget_m": 355.1777794106589,
+        "seed": 7103,
+        "point": {
+          "x": -65.44558657824811,
+          "y": 348.8996125691641
+        },
+        "distance_m": 354.98459748767095,
+        "loss_m": 332.7336317137847,
+        "reception_margin_m": 51.884299842332815,
+        "function_evaluations": 160,
+        "knee_score": 0.22422167391593867
+      },
+      {
+        "movement_budget_m": 376.0705899642271,
+        "seed": 7104,
+        "point": {
+          "x": -73.47624764091829,
+          "y": 368.5275457213958
+        },
+        "distance_m": 375.7809347516516,
+        "loss_m": 317.1992807731375,
+        "reception_margin_m": 49.69760489759451,
+        "function_evaluations": 180,
+        "knee_score": 0.22187863250053624
+      },
+      {
+        "movement_budget_m": 396.96340051779526,
+        "seed": 7105,
+        "point": {
+          "x": -67.97580384886179,
+          "y": 390.46853031143894
+        },
+        "distance_m": 396.34124573714763,
+        "loss_m": 303.1112324815897,
+        "reception_margin_m": 55.62455630496733,
+        "function_evaluations": 160,
+        "knee_score": 0.2188544530695572
+      },
+      {
+        "movement_budget_m": 417.8562110713634,
+        "seed": 6105,
+        "point": {
+          "x": -58.264231388116436,
+          "y": 413.6527614853024
+        },
+        "distance_m": 417.7359545737767,
+        "loss_m": 289.58657813914067,
+        "reception_margin_m": 63.82813578162147,
+        "function_evaluations": 180,
+        "knee_score": 0.21508081218820418
+      },
+      {
+        "movement_budget_m": 501.42745328563615,
+        "seed": 6106,
+        "point": {
+          "x": 461.0029729625242,
+          "y": -196.76504096991695
+        },
+        "distance_m": 501.23868808001936,
+        "loss_m": 245.42848989803778,
+        "reception_margin_m": 87.77565538686252,
+        "function_evaluations": 190,
+        "knee_score": 0.1954634001940222
+      },
+      {
+        "movement_budget_m": 584.9986954999088,
+        "seed": 6107,
+        "point": {
+          "x": 549.1619051035343,
+          "y": -201.04401918464762
+        },
+        "distance_m": 584.8055195249616,
+        "loss_m": 211.2140064905911,
+        "reception_margin_m": 103.39215482217413,
+        "function_evaluations": 180,
+        "knee_score": 0.16988825122207007
+      },
+      {
+        "movement_budget_m": 668.5699377141815,
+        "seed": 6108,
+        "point": {
+          "x": 652.9579697245033,
+          "y": -143.17033301761467
+        },
+        "distance_m": 668.4697857668064,
+        "loss_m": 184.04776434298535,
+        "reception_margin_m": 147.09409782018838,
+        "function_evaluations": 130,
+        "knee_score": 0.13942188745651105
+      },
+      {
+        "movement_budget_m": 752.1411799284542,
+        "seed": 6109,
+        "point": {
+          "x": 133.03772622730708,
+          "y": 740.250065377412
+        },
+        "distance_m": 752.1098296731634,
+        "loss_m": 161.14484676914637,
+        "reception_margin_m": 160.9096616240234,
+        "function_evaluations": 190,
+        "knee_score": 0.10713827284884747
+      },
+      {
+        "movement_budget_m": 835.7124221427268,
+        "seed": 6110,
+        "point": {
+          "x": 181.47968907616522,
+          "y": 815.7332575107336
+        },
+        "distance_m": 835.6767466887268,
+        "loss_m": 142.04128440840825,
+        "reception_margin_m": 167.94557409986328,
+        "function_evaluations": 160,
+        "knee_score": 0.07234693527826545
+      },
+      {
+        "movement_budget_m": 919.2836643569996,
+        "seed": 6111,
+        "point": {
+          "x": 275.34798226812654,
+          "y": 877.061155471317
+        },
+        "distance_m": 919.2675245954304,
+        "loss_m": 125.5632826816343,
+        "reception_margin_m": 84.63636744349458,
+        "function_evaluations": 180,
+        "knee_score": 0.03642422625262455
+      },
+      {
+        "movement_budget_m": 1002.8549065712722,
+        "seed": 6112,
+        "point": {
+          "x": 377.23879156534014,
+          "y": 928.8900868338789
+        },
+        "distance_m": 1002.5696480943003,
+        "loss_m": 111.22479406966563,
+        "reception_margin_m": 1.5766626761062525,
+        "function_evaluations": 180,
+        "knee_score": 0.0
+      }
+    ],
+    "continuous_knee": {
+      "movement_budget_m": 292.4993477499544,
+      "seed": 2026,
+      "point": {
+        "x": -72.4624878348338,
+        "y": 283.05780812203335
+      },
+      "distance_m": 292.18578829584317,
+      "loss_m": 388.767729854948,
+      "reception_margin_m": 37.010045743396155,
+      "function_evaluations": 240,
+      "knee_score": 0.22696308064765824
+    },
+    "grid_knee": {
+      "point": {
+        "x": -74.64111277751894,
+        "y": 289.6591422974847
+      },
+      "symmetric_alternative_point": {
+        "x": 246.66179446996733,
+        "y": -169.20896424845932
+      },
+      "distance_m": 299.121571327079,
+      "loss_m": 381.7127249891844
+    },
+    "coordinate_gap_to_nearest_symmetric_grid_knee_m": 6.951547995725274,
+    "relative_distance_gap": 0.023187171023689824,
+    "relative_loss_gap": 0.018482498496647015,
+    "refined_seed_losses_m": [
+      388.767729854948,
+      389.16495943446887
+    ]
+  },
+  "source_error_sampling_convergence": [
+    {
+      "edge_subdivisions": 6,
+      "radial_levels": 4,
+      "source_sample_count": 91,
+      "measurement_error_grid_count": 5,
+      "scenario_count_per_candidate": 455,
+      "optimum_worst_diameter_m": 111.18684718997912,
+      "recommended_worst_diameter_m": 381.7127249891844,
+      "optimum_relative_change_from_previous": null,
+      "recommended_relative_change_from_previous": null
+    },
+    {
+      "edge_subdivisions": 10,
+      "radial_levels": 5,
+      "source_sample_count": 201,
+      "measurement_error_grid_count": 11,
+      "scenario_count_per_candidate": 2211,
+      "optimum_worst_diameter_m": 111.18684718997912,
+      "recommended_worst_diameter_m": 381.7127249891844,
+      "optimum_relative_change_from_previous": 0.0,
+      "recommended_relative_change_from_previous": 0.0
+    },
+    {
+      "edge_subdivisions": 20,
+      "radial_levels": 7,
+      "source_sample_count": 601,
+      "measurement_error_grid_count": 21,
+      "scenario_count_per_candidate": 12621,
+      "optimum_worst_diameter_m": 111.18684718997912,
+      "recommended_worst_diameter_m": 381.7127249891844,
+      "optimum_relative_change_from_previous": 0.0,
+      "recommended_relative_change_from_previous": 0.0
+    }
+  ],
+  "scenario_audits": [
+    {
+      "name": "中心长角域",
+      "station": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "bearing_deg": 35.0,
+      "first_region_diameter_m": 1495.2292561363988,
+      "grid_optimum_diameter_m": 113.68340198641394,
+      "recommended_point": {
+        "x": 258.03322030608774,
+        "y": -185.4490433901305
+      },
+      "recommended_distance_m": 317.7616881813233,
+      "clearance_guaranteed": false
+    },
+    {
+      "name": "边界向外",
+      "station": {
+        "x": 1600.0,
+        "y": 0.0
+      },
+      "bearing_deg": 0.0,
+      "first_region_diameter_m": 195.03358953556733,
+      "grid_optimum_diameter_m": 30.754655127298637,
+      "recommended_point": {
+        "x": 1654.999238475782,
+        "y": 49.912737967813655
+      },
+      "recommended_distance_m": 74.27110908260067,
+      "clearance_guaranteed": true
+    },
+    {
+      "name": "边界斜切",
+      "station": {
+        "x": 1600.0,
+        "y": 0.0
+      },
+      "bearing_deg": 80.0,
+      "first_region_diameter_m": 606.566444216018,
+      "grid_optimum_diameter_m": 38.8858984270977,
+      "recommended_point": {
+        "x": 1464.597483906185,
+        "y": 384.3507907906347
+      },
+      "recommended_distance_m": 407.50383034509264,
+      "clearance_guaranteed": true
+    }
+  ]
+}
