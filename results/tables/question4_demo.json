@@ -13,23 +13,23 @@
       "p95": 1.0
     },
     "completion_time_s": {
-      "mean": 7458.656742633513,
+      "mean": 7457.356742633513,
       "median": 7461.8702380717,
-      "minimum": 5749.707280891313,
+      "minimum": 5742.707280891313,
       "maximum": 8517.5523436549,
       "p95": 8391.030006646426
     },
     "average_clear_time_s": {
-      "mean": 587.2611078333524,
+      "mean": 587.1798578333525,
       "median": 596.0875469288518,
-      "minimum": 359.35670505570704,
+      "minimum": 358.91920505570704,
       "maximum": 809.3675141363981,
       "p95": 749.3039498361868
     },
     "measure_count": {
-      "mean": 300.93333333333334,
+      "mean": 300.73333333333335,
       "median": 300.0,
-      "minimum": 189.0,
+      "minimum": 188.0,
       "maximum": 417.0,
       "p95": 385.4
     },
@@ -86,9 +86,9 @@
       "omnidirectional_count": 9,
       "cleared_count": 16,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7314.8854388086675,
-      "average_clear_time_s": 457.1803399255417,
-      "measure_count": 245,
+      "completion_time_s": 7295.8854388086675,
+      "average_clear_time_s": 455.9928399255417,
+      "measure_count": 242,
       "clear_attempt_count": 33,
       "survey_station_count": 17,
       "movement_distance_m": 28704.427194043343
@@ -114,9 +114,9 @@
       "omnidirectional_count": 2,
       "cleared_count": 16,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7511.394324024337,
-      "average_clear_time_s": 469.46214525152106,
-      "measure_count": 267,
+      "completion_time_s": 7498.394324024337,
+      "average_clear_time_s": 468.64964525152106,
+      "measure_count": 265,
       "clear_attempt_count": 29,
       "survey_station_count": 20,
       "movement_distance_m": 29091.971620121694
@@ -170,9 +170,9 @@
       "omnidirectional_count": 6,
       "cleared_count": 16,
       "cleared_ratio": 1.0,
-      "completion_time_s": 5749.707280891313,
-      "average_clear_time_s": 359.35670505570704,
-      "measure_count": 189,
+      "completion_time_s": 5742.707280891313,
+      "average_clear_time_s": 358.91920505570704,
+      "measure_count": 188,
       "clear_attempt_count": 35,
       "survey_station_count": 13,
       "movement_distance_m": 22513.536404456572

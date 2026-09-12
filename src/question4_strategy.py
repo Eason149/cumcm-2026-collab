@@ -249,6 +249,9 @@ class MixedDirectionalSearch:
         self.measure_count = 0
         self.clear_attempt_count = 0
 
+    def _known_source_count(self) -> int:
+        return sum(state.detected or state.cleared for state in self.states.values())
+
     def _measure(self, robot: RobotInterface, point: Point, channel: int):
         reply = robot.measure(point, channel)
         self.measure_count += 1
@@ -277,6 +280,8 @@ class MixedDirectionalSearch:
             channels.remove(current_channel)
             channels.insert(0, current_channel)
         for channel in channels:
+            if self._known_source_count() >= self.max_sources:
+                break
             reply = self._measure(robot, station, channel)
             state = self.states[channel]
             if reply.result == "near":
@@ -293,6 +298,8 @@ class MixedDirectionalSearch:
         """Insert low-detour guaranteed clears into the remaining survey route."""
 
         while remaining_stations:
+            if self._known_source_count() >= self.max_sources:
+                return
             direct = robot.position.distance_to(remaining_stations[0])
             choices: list[tuple[float, Point, ChannelState]] = []
             for state in self.states.values():
@@ -490,7 +497,7 @@ class MixedDirectionalSearch:
         stations = plan_station_route(station_set)
         visited: list[Point] = []
         for index, station in enumerate(stations):
-            if sum(state.detected or state.cleared for state in self.states.values()) >= self.max_sources:
+            if self._known_source_count() >= self.max_sources:
                 break
             self._clear_certified_en_route(robot, stations[index:])
             self._scan_station(robot, station)

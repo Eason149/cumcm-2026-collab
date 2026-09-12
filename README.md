@@ -74,4 +74,4 @@ python src/question3_demo.py 30
 python src/question4_demo.py 30
 ```
 
-问题四当前默认使用 `balanced` 23 点巡检和 8° 双侧追踪；本地 30 局固定种子演练全部清除，平均总定位清除时间为 7458.7 s。若需要更强几何证明，可在正式客户端中切换 `--survey-profile certified`。
+问题四当前默认使用 `balanced` 23 点巡检和 8° 双侧追踪；本地 30 局固定种子演练全部清除，平均总定位清除时间为 7457.4 s。若需要更强几何证明，可在正式客户端中切换 `--survey-profile certified`。
