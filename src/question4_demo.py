@@ -32,7 +32,7 @@ from question4_strategy import (
 TABLE_PATH = ROOT / "results" / "tables" / "question4_demo.json"
 SUMMARY_PATH = ROOT / "results" / "tables" / "question4_summary.md"
 FIGURE_DIR = ROOT / "results" / "figures"
-SURVEY_PROFILE = "balanced"
+SURVEY_PROFILE = "rapid"
 PURSUIT_DEFLECTION_DEG = 8.0
 ENROUTE_DETOUR_LIMIT_M = 500.0
 ENROUTE_SPECULATIVE_LIMIT_M = 400.0
@@ -89,7 +89,7 @@ def estimate_profile_reliability(sample_count: int = 1_000_000) -> dict[str, obj
     ux, uy = np.cos(direction), np.sin(direction)
     reception_radius = rng.uniform(1000.0, 1500.0, sample_count)
     results: dict[str, object] = {}
-    for profile in ("fast", "balanced", "certified"):
+    for profile in ("fast", "rapid", "balanced", "certified"):
         stations = survey_stations_for_profile(profile)
         detected = np.zeros(sample_count, dtype=bool)
         for station in stations:
@@ -181,7 +181,7 @@ def write_summary_markdown(summary: dict[str, object]) -> None:
             "|---|---:|---:|---:|---:|",
         )
     )
-    for profile in ("fast", "balanced", "certified"):
+    for profile in ("fast", "rapid", "balanced", "certified"):
         values = summary["profile_detection_reliability"][profile]
         lines.append(
             f"| {profile} | {values['station_count']} | "
@@ -218,7 +218,7 @@ def plot_lattice() -> None:
     axis.set_ylim(-3000, 3000)
     axis.set_xlabel("East coordinate (m)")
     axis.set_ylabel("North coordinate (m)")
-    axis.set_title("Balanced directional discovery route")
+    axis.set_title(f"{SURVEY_PROFILE.capitalize()} directional discovery route")
     axis.text(0.02, 0.02, f"{len(route)} active stations; edge = 999 m", transform=axis.transAxes, fontsize=8)
     axis.legend(loc="upper right")
     style_axis(axis)

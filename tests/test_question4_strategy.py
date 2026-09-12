@@ -104,6 +104,7 @@ class Question4StrategyTests(unittest.TestCase):
     def test_survey_profile_sizes(self) -> None:
         self.assertEqual(len(survey_stations_for_profile("certified")), 25)
         self.assertEqual(len(survey_stations_for_profile("balanced")), 23)
+        self.assertEqual(len(survey_stations_for_profile("rapid")), 21)
         self.assertEqual(len(survey_stations_for_profile("fast")), 20)
         with self.assertRaises(ValueError):
             survey_stations_for_profile("unknown")

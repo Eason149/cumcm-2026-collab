@@ -154,9 +154,13 @@ def survey_stations_for_profile(profile: str) -> tuple[Point, ...]:
         ]
         retained.extend((Point(-1720.0, -850.0), Point(1720.0, -850.0)))
         return tuple(retained)
+    if profile == "rapid":
+        retained = list(stations[index] for index in FAST_STATION_INDICES)
+        retained.append(Point(1700.0, -800.0))
+        return tuple(retained)
     if profile == "fast":
         return tuple(stations[index] for index in FAST_STATION_INDICES)
-    raise ValueError("survey_profile must be 'certified', 'balanced', or 'fast'.")
+    raise ValueError("survey_profile must be 'certified', 'balanced', 'rapid', or 'fast'.")
 
 
 def bracketing_candidates(
@@ -228,7 +232,7 @@ class MixedDirectionalSearch:
         pursuit_initial_step_m: float = 40.0,
         pursuit_deflection_deg: float = 8.0,
         pursuit_speculative_limit: int = 0,
-        survey_profile: str = "balanced",
+        survey_profile: str = "rapid",
         enroute_detour_limit_m: float = 500.0,
         enroute_speculative_limit_m: float = 400.0,
     ) -> None:
