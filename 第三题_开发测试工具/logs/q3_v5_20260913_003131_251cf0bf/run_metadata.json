@@ -1,0 +1,49 @@
+{
+  "started_at": "2026-09-13T00:31:31.341142+08:00",
+  "question": 3,
+  "execution_mode": "official_http",
+  "algorithm": {
+    "strategy_entrypoint": "q3_algorithm.solve_optimized_v5",
+    "strategy_version": "q3_joint_search_clear_route_v5",
+    "selected_parameters": {
+      "route_mode": "joint",
+      "probe": 250,
+      "share_at_search": true,
+      "share_during": false,
+      "share_ratio": 0.7,
+      "offset": 0.1,
+      "advance": 0.25,
+      "unknown_scan": false,
+      "rotation": 0.0,
+      "exact_positive": false,
+      "info_points": false,
+      "arc_scan": 0,
+      "estimate": "circle",
+      "trial_radius": 40,
+      "trial_limit": 12,
+      "probe_count": 1,
+      "site_passes": 1,
+      "site_bonus": 0.0,
+      "planning_radius": 1500,
+      "commit": false,
+      "sweep_advance": 0.0
+    },
+    "strategy_sources": {
+      "__init__.py": "8326e01d571aea41f0a1eb88619abe94c713b5cb2c6332c17befaee97dc93f3b",
+      "actions.py": "59a99c9ee86fbe0ec3c0ab9e00a2615a2f807e12c31493f50de105568020beb6",
+      "config.py": "fe337185bbe6f6713e4dabcac484f8100d8d5c424abeabb55ff71f820ad0c586",
+      "geometry.py": "c72ffcd2b7fb28eaf3dbd86b43040f71a1632c9bce2dcbcf4ab31a8254372cd5",
+      "geometry_backend.py": "81141da8c74ca40dbe3ca17dca104cc70e3fde7074877df15582e95598555ff5",
+      "geometry_kernel.py": "9606f114aaa2d6beffd7737118cde0c2fb16a9ebd6d26cf5e9c5691aae729d6f",
+      "models.py": "9ad30df70805dbc514af25ac486c5da3ab0e1f62e5c5358bec713d090014da55",
+      "planner.py": "61278c999541fefb5e9de839c67b6dbbafbb34a1510f7c79e70006e7ac6f0e87",
+      "result.py": "ed7742d39b78808f8b0f212f67ded6710cd351d1b2fdbbb9fb64ca2356b0e823",
+      "route.py": "3e75c5774d452f1c5267314220978b9459fb403c0b070706d8732933346a7fb2",
+      "solver.py": "75bee8311961d7b5ed04ce85f381f860cda2c46cf2d1a17725a5e7d75be51acf"
+    },
+    "geometry_source": "D:\\Cumcm\\第三题最终版\\q3_algorithm\\geometry_kernel.py",
+    "geometry_sha256": "9606f114aaa2d6beffd7737118cde0c2fb16a9ebd6d26cf5e9c5691aae729d6f",
+    "transport_adapter": "legacy_v5_official.LegacyV5OfficialClient"
+  },
+  "client_log": "D:\\Cumcm\\第三题_开发测试工具\\logs\\q3_v5_20260913_003131_251cf0bf\\actions.jsonl"
+}
