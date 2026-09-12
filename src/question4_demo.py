@@ -32,7 +32,7 @@ from question4_strategy import (
 TABLE_PATH = ROOT / "results" / "tables" / "question4_demo.json"
 SUMMARY_PATH = ROOT / "results" / "tables" / "question4_summary.md"
 FIGURE_DIR = ROOT / "results" / "figures"
-SURVEY_PROFILE = "rapid"
+SURVEY_PROFILE = "turbo"
 PURSUIT_DEFLECTION_DEG = 8.0
 ENROUTE_DETOUR_LIMIT_M = 500.0
 ENROUTE_SPECULATIVE_LIMIT_M = 400.0
@@ -89,7 +89,7 @@ def estimate_profile_reliability(sample_count: int = 1_000_000) -> dict[str, obj
     ux, uy = np.cos(direction), np.sin(direction)
     reception_radius = rng.uniform(1000.0, 1500.0, sample_count)
     results: dict[str, object] = {}
-    for profile in ("fast", "rapid", "balanced", "certified"):
+    for profile in ("fast", "turbo", "rapid", "balanced", "certified"):
         stations = survey_stations_for_profile(profile)
         detected = np.zeros(sample_count, dtype=bool)
         for station in stations:
@@ -181,7 +181,7 @@ def write_summary_markdown(summary: dict[str, object]) -> None:
             "|---|---:|---:|---:|---:|",
         )
     )
-    for profile in ("fast", "rapid", "balanced", "certified"):
+    for profile in ("fast", "turbo", "rapid", "balanced", "certified"):
         values = summary["profile_detection_reliability"][profile]
         lines.append(
             f"| {profile} | {values['station_count']} | "

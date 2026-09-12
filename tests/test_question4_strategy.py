@@ -105,6 +105,7 @@ class Question4StrategyTests(unittest.TestCase):
         self.assertEqual(len(survey_stations_for_profile("certified")), 25)
         self.assertEqual(len(survey_stations_for_profile("balanced")), 23)
         self.assertEqual(len(survey_stations_for_profile("rapid")), 21)
+        self.assertEqual(len(survey_stations_for_profile("turbo")), 20)
         self.assertEqual(len(survey_stations_for_profile("fast")), 20)
         with self.assertRaises(ValueError):
             survey_stations_for_profile("unknown")
