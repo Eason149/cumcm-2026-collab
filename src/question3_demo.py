@@ -1,0 +1,291 @@
+"""Monte Carlo validation and figures for Question 3."""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+from dataclasses import asdict
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+os.environ.setdefault("MPLBACKEND", "Agg")
+os.environ.setdefault("MPLCONFIGDIR", str(ROOT / "tmp" / "matplotlib"))
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Circle as CirclePatch
+
+from plot_style import PALETTE, add_panel_label, apply_publication_style, save_publication_figure, style_axis
+from question1_geometry import Point
+from question3_simulator import LocalOmniSimulator, random_case
+from question3_strategy import (
+    AdaptiveOmniSearch,
+    BatchOmniSearch,
+    MIN_RECEPTION_RADIUS_M,
+    TARGET_RADIUS_M,
+    survey_covering_radius_m,
+    survey_stations,
+)
+
+
+TABLE_PATH = ROOT / "results" / "tables" / "question3_demo.json"
+SUMMARY_PATH = ROOT / "results" / "tables" / "question3_summary.md"
+FIGURE_DIR = ROOT / "results" / "figures"
+
+
+def run_cases(case_count: int = 30) -> tuple[list[dict[str, object]], LocalOmniSimulator]:
+    records: list[dict[str, object]] = []
+    example: LocalOmniSimulator | None = None
+    for seed in range(case_count):
+        baseline_sources = random_case(seed)
+        baseline_simulator = LocalOmniSimulator(baseline_sources, seed=10_000 + seed)
+        baseline = AdaptiveOmniSearch(circle_sides=120).run(baseline_simulator)
+
+        sources = random_case(seed)
+        simulator = LocalOmniSimulator(sources, seed=10_000 + seed)
+        result = BatchOmniSearch(circle_sides=120).run(simulator)
+        actual = len(sources)
+        visited = list(result.survey_stations_visited)
+        survey_route = [Point(0.0, 0.0)] + visited
+        survey_distance_m = sum(
+            first.distance_to(second)
+            for first, second in zip(survey_route, survey_route[1:])
+        )
+        movement_distance_m = 5.0 * sum(
+            float(action["movement_s"]) for action in simulator.actions
+        )
+        record = {
+            "seed": seed,
+            "source_count": actual,
+            "cleared_count": len(result.cleared_channels),
+            "cleared_ratio": len(result.cleared_channels) / actual,
+            "completion_time_s": result.completion_time_s,
+            "average_clear_time_s": result.average_clear_time_s,
+            "measure_count": result.measure_count,
+            "clear_attempt_count": result.clear_attempt_count,
+            "survey_station_count": len(result.survey_stations_visited),
+            "movement_distance_m": movement_distance_m,
+            "survey_distance_m": survey_distance_m,
+            "baseline_completion_time_s": baseline.completion_time_s,
+            "time_reduction_vs_immediate_pct": 100.0
+            * (baseline.completion_time_s - result.completion_time_s)
+            / baseline.completion_time_s,
+        }
+        records.append(record)
+        if seed == 3:
+            example = simulator
+    if example is None:
+        raise RuntimeError("No example case was generated.")
+    return records, example
+
+
+def summarize(records: list[dict[str, object]]) -> dict[str, object]:
+    numeric_fields = (
+        "cleared_ratio",
+        "completion_time_s",
+        "average_clear_time_s",
+        "measure_count",
+        "clear_attempt_count",
+        "survey_station_count",
+        "movement_distance_m",
+        "survey_distance_m",
+        "baseline_completion_time_s",
+        "time_reduction_vs_immediate_pct",
+    )
+    summary: dict[str, object] = {"case_count": len(records)}
+    for field in numeric_fields:
+        values = np.array([float(record[field]) for record in records])
+        summary[field] = {
+            "mean": float(values.mean()),
+            "median": float(np.median(values)),
+            "minimum": float(values.min()),
+            "maximum": float(values.max()),
+            "p95": float(np.quantile(values, 0.95)),
+        }
+    summary["all_sources_cleared_in_every_case"] = all(
+        record["cleared_count"] == record["source_count"] for record in records
+    )
+    summary["survey_covering_radius_m"] = survey_covering_radius_m()
+    summary["minimum_reception_margin_m"] = (
+        MIN_RECEPTION_RADIUS_M - survey_covering_radius_m()
+    )
+    by_source_count: dict[str, object] = {}
+    for source_count in sorted({int(record["source_count"]) for record in records}):
+        subset = [record for record in records if record["source_count"] == source_count]
+        by_source_count[str(source_count)] = {
+            "case_count": len(subset),
+            "cleared_ratio_mean": float(
+                np.mean([float(record["cleared_ratio"]) for record in subset])
+            ),
+            "completion_time_mean_s": float(
+                np.mean([float(record["completion_time_s"]) for record in subset])
+            ),
+            "average_clear_time_mean_s": float(
+                np.mean([float(record["average_clear_time_s"]) for record in subset])
+            ),
+        }
+    summary["by_source_count"] = by_source_count
+    return summary
+
+
+def write_summary_markdown(summary: dict[str, object]) -> None:
+    """Write the paper-ready numerical table from the saved experiment data."""
+
+    labels = (
+        ("cleared_ratio", "被清除比例", 3),
+        ("completion_time_s", "总定位清除时间（s）", 1),
+        ("average_clear_time_s", "平均定位清除时间（s/个）", 1),
+        ("measure_count", "检测次数", 1),
+    )
+    lines = [
+        "<!-- Generated by src/question3_demo.py; do not edit values manually. -->",
+        "| 指标 | 均值 | 中位数 | 最小值 | 最大值 | 95% 分位数 |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for key, label, digits in labels:
+        values = summary[key]
+        row = [label]
+        for statistic in ("mean", "median", "minimum", "maximum", "p95"):
+            row.append(f"{float(values[statistic]):.{digits}f}")
+        lines.append("| " + " | ".join(row) + " |")
+    reduction = summary["time_reduction_vs_immediate_pct"]
+    lines.extend(
+        (
+            "",
+            f"批量策略相对即时定位 baseline 的平均总时间降幅为 "
+            f"{float(reduction['mean']):.1f}%。",
+            "",
+            "| 源数量 | 案例数 | 平均清除比例 | 平均总时间（s） | 平均每源时间（s/个） |",
+            "|---:|---:|---:|---:|---:|",
+        )
+    )
+    for source_count, values in summary["by_source_count"].items():
+        lines.append(
+            f"| {source_count} | {values['case_count']} | "
+            f"{values['cleared_ratio_mean']:.3f} | "
+            f"{values['completion_time_mean_s']:.1f} | "
+            f"{values['average_clear_time_mean_s']:.1f} |"
+        )
+    SUMMARY_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def plot_coverage() -> None:
+    apply_publication_style()
+    figure, axis = plt.subplots(figsize=(5.2, 5.0))
+    target = CirclePatch((0.0, 0.0), TARGET_RADIUS_M, fill=False, color=PALETTE["ink"], linewidth=1.5)
+    axis.add_patch(target)
+    stations = survey_stations()
+    for index, station in enumerate(stations):
+        disk = CirclePatch(
+            (station.x, station.y),
+            MIN_RECEPTION_RADIUS_M,
+            facecolor=PALETTE["light_blue"],
+            edgecolor=PALETTE["teal"],
+            linewidth=0.7,
+            alpha=0.16,
+        )
+        axis.add_patch(disk)
+        axis.scatter(station.x, station.y, s=24, color=PALETTE["red"], zorder=4)
+        axis.text(station.x + 35, station.y + 35, f"P{index}", fontsize=7.5)
+    axis.set_aspect("equal")
+    axis.set_xlim(-2250, 2250)
+    axis.set_ylim(-2250, 2250)
+    axis.set_xlabel("East coordinate (m)")
+    axis.set_ylabel("North coordinate (m)")
+    axis.set_title("Seven-station guaranteed discovery cover")
+    axis.text(
+        0.02,
+        0.02,
+        f"Worst nearest-station distance = {survey_covering_radius_m():.1f} m",
+        transform=axis.transAxes,
+        fontsize=8,
+    )
+    style_axis(axis)
+    save_publication_figure(figure, FIGURE_DIR / "question3_coverage.png")
+    plt.close(figure)
+
+
+def plot_metrics(records: list[dict[str, object]]) -> None:
+    apply_publication_style()
+    completion = np.array([float(record["completion_time_s"]) / 60.0 for record in records])
+    average = np.array([float(record["average_clear_time_s"]) for record in records])
+    measures = np.array([float(record["measure_count"]) for record in records])
+    baseline = np.array([float(record["baseline_completion_time_s"]) / 60.0 for record in records])
+
+    figure, axes = plt.subplots(1, 3, figsize=(9.0, 2.75))
+    for first, second in zip(baseline, completion):
+        axes[0].plot((0, 1), (first, second), color=PALETTE["gray"], linewidth=0.6, alpha=0.55)
+    axes[0].scatter(np.zeros_like(baseline), baseline, color=PALETTE["orange"], s=15, label="Immediate")
+    axes[0].scatter(np.ones_like(completion), completion, color=PALETTE["teal"], s=15, label="Batch")
+    axes[0].set_xticks((0, 1), ("Immediate", "Batch"))
+    axes[0].set_ylabel("Completion time (min)")
+    axes[0].set_title("Paired baseline comparison")
+    axes[1].hist(average, bins=8, color=PALETTE["orange"], alpha=0.82)
+    axes[1].set_xlabel("Average time per source (s)")
+    axes[1].set_title("Competition metric")
+    axes[2].scatter(measures, completion, color=PALETTE["red"], s=20, alpha=0.8)
+    axes[2].set_xlabel("Number of measurements")
+    axes[2].set_ylabel("Completion time (min)")
+    axes[2].set_title("Sensing-time tradeoff")
+    for label, axis in zip(("a", "b", "c"), axes):
+        add_panel_label(axis, label)
+        style_axis(axis)
+    figure.tight_layout(w_pad=2.0)
+    save_publication_figure(figure, FIGURE_DIR / "question3_monte_carlo.png")
+    plt.close(figure)
+
+
+def plot_example(simulator: LocalOmniSimulator) -> None:
+    apply_publication_style()
+    figure, axis = plt.subplots(figsize=(5.3, 5.0))
+    axis.add_patch(
+        CirclePatch((0.0, 0.0), TARGET_RADIUS_M, fill=False, color=PALETTE["ink"], linewidth=1.3)
+    )
+    route_x = [0.0] + [float(action["x"]) for action in simulator.actions]
+    route_y = [0.0] + [float(action["y"]) for action in simulator.actions]
+    axis.plot(route_x, route_y, color=PALETTE["gray"], linewidth=0.75, alpha=0.7, zorder=1)
+    source_x = [source.position.x for source in simulator.sources.values()]
+    source_y = [source.position.y for source in simulator.sources.values()]
+    axis.scatter(source_x, source_y, marker="*", s=55, color=PALETTE["red"], label="Sources", zorder=4)
+    clear_actions = [action for action in simulator.actions if action["action"] == "clear"]
+    axis.scatter(
+        [float(action["x"]) for action in clear_actions],
+        [float(action["y"]) for action in clear_actions],
+        marker="o",
+        s=18,
+        facecolor="white",
+        edgecolor=PALETTE["teal"],
+        label="Clear points",
+        zorder=5,
+    )
+    axis.set_aspect("equal")
+    axis.set_xlim(-2100, 2100)
+    axis.set_ylim(-2100, 2100)
+    axis.set_xlabel("East coordinate (m)")
+    axis.set_ylabel("North coordinate (m)")
+    axis.set_title("Example adaptive trajectory")
+    axis.legend(loc="upper right")
+    style_axis(axis)
+    save_publication_figure(figure, FIGURE_DIR / "question3_example_route.png")
+    plt.close(figure)
+
+
+def main() -> None:
+    case_count = int(sys.argv[1]) if len(sys.argv) > 1 else 30
+    records, example = run_cases(case_count)
+    summary = summarize(records)
+    payload = {"summary": summary, "cases": records}
+    TABLE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    TABLE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    write_summary_markdown(summary)
+    plot_coverage()
+    plot_metrics(records)
+    plot_example(example)
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main()

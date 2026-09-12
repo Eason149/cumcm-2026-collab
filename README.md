@@ -60,6 +60,8 @@ paper/             论文源文件及附录
 
 - [问题一：交会定位区域直径与覆盖圆判定](paper/问题一_交会定位区域直径与覆盖判定.md)
 - [问题二：第二检测点的鲁棒选址策略](paper/问题二_第二检测点鲁棒选址策略.md)
+- [问题三：全向多源自适应搜索定位与清除](paper/问题三_全向多源自适应搜索定位与清除.md)
+- [问题四：混合方向源保证发现与保信号追踪](paper/问题四_混合方向源保证发现与保信号追踪.md)
 
 复现问题一、二结果：
 
@@ -68,4 +70,8 @@ python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 python src/question1_demo.py
 python src/question2_demo.py
+python src/question3_demo.py 30
+python src/question4_demo.py 30
 ```
+
+问题四当前默认使用 `balanced` 23 点巡检和 8° 双侧追踪；本地 30 局固定种子演练全部清除，平均总定位清除时间为 7458.7 s。若需要更强几何证明，可在正式客户端中切换 `--survey-profile certified`。
