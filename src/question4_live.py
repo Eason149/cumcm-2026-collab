@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log", type=Path)
     parser.add_argument(
         "--survey-profile",
-        choices=("fast", "turbo", "rapid", "balanced", "certified"),
+        choices=("sprint", "fast", "turbo", "rapid", "balanced", "certified"),
         default="turbo",
         help="Speed/reliability tradeoff; certified retains the 25-point proof.",
     )

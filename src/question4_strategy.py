@@ -166,9 +166,18 @@ def survey_stations_for_profile(profile: str) -> tuple[Point, ...]:
         ]
         retained.append(Point(1700.0, -800.0))
         return tuple(retained)
+    if profile == "sprint":
+        return tuple(
+            stations[index]
+            for index in FAST_STATION_INDICES
+            if index not in {0, 22}
+        )
     if profile == "fast":
         return tuple(stations[index] for index in FAST_STATION_INDICES)
-    raise ValueError("survey_profile must be 'certified', 'balanced', 'rapid', 'turbo', or 'fast'.")
+    raise ValueError(
+        "survey_profile must be 'certified', 'balanced', 'rapid', 'turbo', "
+        "'fast', or 'sprint'."
+    )
 
 
 def bracketing_candidates(
@@ -243,6 +252,8 @@ class MixedDirectionalSearch:
         survey_profile: str = "turbo",
         enroute_detour_limit_m: float = 500.0,
         enroute_speculative_limit_m: float = 400.0,
+        adaptive_source_insert_limit_m: float = 0.0,
+        centroid_probe_limit_m: float = 650.0,
     ) -> None:
         self.channels = tuple(channels)
         self.circle_sides = circle_sides
@@ -256,6 +267,8 @@ class MixedDirectionalSearch:
         self.survey_profile = survey_profile
         self.enroute_detour_limit_m = enroute_detour_limit_m
         self.enroute_speculative_limit_m = enroute_speculative_limit_m
+        self.adaptive_source_insert_limit_m = adaptive_source_insert_limit_m
+        self.centroid_probe_limit_m = centroid_probe_limit_m
         self._enroute_attempted_channels: set[int] = set()
         self.states = {channel: ChannelState(channel) for channel in self.channels}
         self.measure_count = 0
@@ -378,6 +391,62 @@ class MixedDirectionalSearch:
             return True
         return False
 
+    def _source_route_proxy(self, state: ChannelState) -> Point:
+        """Return a public-information proxy point for routing a known source."""
+
+        estimate = _nominal_bearing_intersection(state)
+        if estimate is not None:
+            return estimate
+        _, center = _region_radius_and_center(state)
+        return center
+
+    def _resolve_low_insert_sources(
+        self, robot: RobotInterface, remaining_stations: tuple[Point, ...]
+    ) -> None:
+        """Resolve known sources whose insertion cost into the survey backbone is low.
+
+        The fixed station order is kept as the backbone.  A detected source may
+        jump ahead only when visiting its public-information proxy and returning
+        to the next station adds little distance.  This keeps the rule distinct
+        from a full joint route rebuild and avoids using hidden source data.
+        """
+
+        if self.adaptive_source_insert_limit_m <= 0.0:
+            return
+        while remaining_stations:
+            if self._known_source_count() >= self.max_sources:
+                return
+            next_station = remaining_stations[0]
+            direct = robot.position.distance_to(next_station)
+            choices: list[tuple[float, float, ChannelState]] = []
+            for state in self.states.values():
+                if not state.detected or state.cleared:
+                    continue
+                proxy = self._source_route_proxy(state)
+                detour = (
+                    robot.position.distance_to(proxy)
+                    + proxy.distance_to(next_station)
+                    - direct
+                )
+                radius_m, _ = _region_radius_and_center(state)
+                choices.append((detour, radius_m, state))
+            if not choices:
+                return
+            detour, radius_m, state = min(
+                choices,
+                key=lambda item: (
+                    item[0],
+                    item[1],
+                    robot.position.distance_to(self._source_route_proxy(item[2])),
+                ),
+            )
+            dynamic_limit = self.adaptive_source_insert_limit_m + 0.25 * min(
+                radius_m, MAX_RECEPTION_RADIUS_M
+            )
+            if detour > dynamic_limit:
+                return
+            self._resolve_channel(robot, state)
+
     def _pursue_from_observation(
         self,
         robot: RobotInterface,
@@ -467,6 +536,29 @@ class MixedDirectionalSearch:
     def _resolve_channel(self, robot: RobotInterface, state: ChannelState) -> None:
         if self._try_certified_clear(robot, state):
             return
+        if len(state.observations) == 1 and self.centroid_probe_limit_m > 0.0:
+            radius_m, center = _region_radius_and_center(state)
+            anchor = state.observations[-1]
+            probe = center
+            detour = robot.position.distance_to(probe)
+            if (
+                radius_m > CLEAR_RADIUS_M
+                and detour <= self.centroid_probe_limit_m
+                and anchor.station.distance_to(probe) <= MAX_RECEPTION_RADIUS_M
+            ):
+                if self._clear(robot, probe, state):
+                    return
+                reply = self._measure(robot, probe, state.channel)
+                if reply.result == "near":
+                    raise RuntimeError(
+                        f"Clear/measure inconsistency for channel {state.channel}."
+                    )
+                if reply.result == "direction":
+                    _update_state_with_bearing(
+                        state, probe, float(reply.bearing_deg), self.circle_sides
+                    )
+                    if self._try_certified_clear(robot, state):
+                        return
         if len(state.observations) >= 2:
             estimate = _nominal_bearing_intersection(state)
             if estimate is not None:
@@ -512,6 +604,9 @@ class MixedDirectionalSearch:
             if self._known_source_count() >= self.max_sources:
                 break
             self._clear_certified_en_route(robot, stations[index:])
+            self._resolve_low_insert_sources(robot, stations[index:])
+            if self._known_source_count() >= self.max_sources:
+                break
             self._scan_station(robot, station)
             visited.append(station)
 

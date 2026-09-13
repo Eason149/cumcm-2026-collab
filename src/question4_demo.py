@@ -89,7 +89,7 @@ def estimate_profile_reliability(sample_count: int = 1_000_000) -> dict[str, obj
     ux, uy = np.cos(direction), np.sin(direction)
     reception_radius = rng.uniform(1000.0, 1500.0, sample_count)
     results: dict[str, object] = {}
-    for profile in ("fast", "turbo", "rapid", "balanced", "certified"):
+    for profile in ("sprint", "fast", "turbo", "rapid", "balanced", "certified"):
         stations = survey_stations_for_profile(profile)
         detected = np.zeros(sample_count, dtype=bool)
         for station in stations:
@@ -181,7 +181,7 @@ def write_summary_markdown(summary: dict[str, object]) -> None:
             "|---|---:|---:|---:|---:|",
         )
     )
-    for profile in ("fast", "turbo", "rapid", "balanced", "certified"):
+    for profile in ("sprint", "fast", "turbo", "rapid", "balanced", "certified"):
         values = summary["profile_detection_reliability"][profile]
         lines.append(
             f"| {profile} | {values['station_count']} | "
