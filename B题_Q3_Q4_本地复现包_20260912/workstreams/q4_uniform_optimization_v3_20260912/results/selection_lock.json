@@ -1,0 +1,92 @@
+{
+  "version": "q4_uniform_backbone_v3",
+  "selected_name": "backbone_centre",
+  "selected_parameters": {
+    "route": "joint",
+    "share": true,
+    "directional": false,
+    "angle_bin": 4.0,
+    "trial_radius": 40.0,
+    "probe_offset": 0.25,
+    "radio_limit": 12,
+    "search_first": false,
+    "source_bias": 0.0,
+    "crossbar": true,
+    "crossbar_offset": 0.03,
+    "crossbar_after_dark": false,
+    "station_layout": "8_16",
+    "station_inner": 990.0,
+    "crossbar_fraction": 0.25,
+    "conditional_range": true,
+    "route_mode": "backbone",
+    "route_estimate": 0.5,
+    "opportunistic": false,
+    "drop_sites": false,
+    "share_ratio": 0.7,
+    "negative_regions": "disk",
+    "crossbar_reference": "latest",
+    "stop_when_found16": true,
+    "scan_current_first": true,
+    "near_clear_distance": 50.0,
+    "near_clear_radius": 20.0
+  },
+  "locked_at_utc": "2026-09-12T07:21:25.620386+00:00",
+  "selection_policy": "Choose by complete pooled time on64 already seen uniform cases;320 other seen scenes verify reliability. No new cases exist yet.",
+  "source_sha256": {
+    "bridge.py": "1fb23a9c562038e88c5eff8deef99d0781d2fd04e2d56451b33abbecf3a77914",
+    "experiments_v3.py": "18ea825993ee1edf643c989e4de80e1663da6f282ea72c40e55171466c5f329b",
+    "finish_development.py": "f8172e7b9819ae120bd5e866909b091667660cd33b3374e693ae235e9ee86101",
+    "lock_validate_v3.py": "b05f73340959666e66eca3bfab2f0818a330a9287ed7bcc73e45e184f33dfb11",
+    "metrics_v3.py": "f5001eea31e3af11f7a4ea102f7219d0abaaf9cb97c9106939c37c7b16f8dfc6",
+    "run_offline.py": "58befc060440c294fde04d0897ad1c8cadcea77ef94fb9d5d7ec82566cfb4a4d",
+    "strategy_v3.py": "5fd6719e4a7ff67c045574c6cd840db2c21d707e8ab7743fa3f6df19b8785e4b",
+    "structural_round2.py": "997839bbc55fb2950b046b8cefe02a0ec64866ceb1b69874d4842c53633c99dd",
+    "tour_utils.py": "e6b3eab41b8ed1907b976b10974159fc6779c078a5ebf30e084339d688622398",
+    "verify_v3.py": "f00cce7f8f074a3a7e43bd69494d925c7ce45cb70c982331d724dfb56abdb123",
+    "../q4_local_optimization_v2_20260912/candidate.py": "c53ce69cdb2312d0bb3c5e716de46724e91dd630ace8fd8bec05268688c96564",
+    "../q4_local_optimization_v2_20260912/conditional.py": "da80d4939ee5e4b3f024a808c36170131bcfee2461249c29398cd6ea7190569f",
+    "../q4_local_optimization_v2_20260912/negative_regions.py": "bd6b743517af798c9413782748b988637f8aaa87306aeb5fcc5d89627778bee9",
+    "../q4_local_optimization_v2_20260912/coverage.py": "eb490f6935b0f901ce8bfe632fa45ca54691982d8c3ecc91fb58fbf5c7af9f95",
+    "../q4_local_optimization_v2_20260912/base.py": "e28fa4fa19280095400ef2c2a59d0700d1719059fb2c776175bb3023d6f55084",
+    "../q4_local_optimization_v2_20260912/experiment.py": "edb6b4d43615455b528c70e63607c695eb772020d7d55352ed1e16cb0b50b72a",
+    "../q4_local_optimization_v2_20260912/metrics.py": "004f0900db9655c7b56fab675bb73077e227a8ae004e9ee8d7b237f1caee9eb7",
+    "../q4_local_optimization_v2_20260912/cases_v2.py": "3818696fd10f6abc1b28050714aadd17e4cfe76396a704f714beb584cc20907b",
+    "../q4_local_optimization_v2_20260912/results/selection_lock.json": "27382a082a0ce8d62cda864a0854a69faaefdd9a272906d793e97bebcb1f5891",
+    "../q4_local_optimization_20260912/strategy.py": "c953dc9fd28de893ef9027cf2ebb13a3f319069c0eade2ad8c8280a90359f2c6",
+    "../q4_local_optimization_20260912/local_geometry.py": "15fb21e68aa934d490f7516191457656719e9c81ce13ecd8c77c9f740f8d5aea",
+    "../q4_local_optimization_20260912/crossbar.py": "89765204c584b9f53936b0a7faec02b9cc67f2af51f3fc88987683ec442f3157",
+    "../q4_local_optimization_20260912/offline_world.py": "7d1258b083307264fbccb63f59056405d2bd422fe3356de00a321185b9290d6b",
+    "../q4_local_optimization_20260912/experiments.py": "0fed36981738cad03fb7cdb26dd229033f2a1e3ff7f88322f7c1e896dcb224d0",
+    "../q4_local_optimization_20260912/results/selection_lock.json": "d3632186d8d26b7b63997268d0c546064a967891749d39b9742c728d2ab0d0f0",
+    "../../code/src/geometry.py": "72e6cb248df4bffa94538422fed6c9feee657b1062f3f7c5d4101ef46b1c7e39"
+  },
+  "development_report_sha256": "ea3c15bb6eea3f0929af1c9f4e8109697be7fbe74966f176ba887142ab2489e2",
+  "runtime": {
+    "python": "3.13.7",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1"
+  },
+  "validation_plan": {
+    "uniform_seeds": [
+      967000,
+      967139
+    ],
+    "uniform_count": 140,
+    "uniform_per_source_count": 20,
+    "stress_seeds": [
+      968000,
+      968034
+    ],
+    "stress_count": 35
+  },
+  "adoption_gate": {
+    "all_sources_cleared": true,
+    "minimum_uniform_improvement_vs_each_reference": 0.01,
+    "paired_stratified_bootstrap_95pct_lower_above_zero": true,
+    "reference_versions": [
+      "v1",
+      "v2"
+    ]
+  },
+  "claim_scope": "Uniform source positions are an unconfirmed working hypothesis, not established official TSP data. No retuning on these new scenes."
+}

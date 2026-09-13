@@ -1,0 +1,57 @@
+{
+  "version": "q4_local_joint_crossbar_v1",
+  "locked_at_utc": "2026-09-12T06:18:16.693331+00:00",
+  "selection_scope": "72 development cases, both reports searched; no new validation scene generated yet",
+  "selected_name": "crossbar_0p03",
+  "selected_parameters": {
+    "route": "joint",
+    "share": true,
+    "directional": false,
+    "angle_bin": 4.0,
+    "trial_radius": 40.0,
+    "probe_offset": 0.25,
+    "radio_limit": 12,
+    "search_first": false,
+    "source_bias": 0.0,
+    "crossbar": true,
+    "crossbar_offset": 0.03,
+    "crossbar_after_dark": false,
+    "station_layout": "8_16",
+    "station_inner": 990.0
+  },
+  "development_summary": {
+    "strategy": "crossbar_0p03",
+    "cases": 72,
+    "passed_cases": 72,
+    "error_cases": 0,
+    "pooled_s": 527.1660107095365,
+    "mean_case_s": 540.3583444558969,
+    "median_s": 537.6820295897373,
+    "p90_s": 679.4413786024209,
+    "max_s": 847.3209538823879,
+    "max_actions": 525,
+    "mean_runtime_s": 0.07526825833499767,
+    "max_runtime_s": 0.14175980002619326,
+    "cleared_sources": 911,
+    "source_count": 911,
+    "failed_optical_attempts": 156
+  },
+  "development_report": "results\\refine_round3\\comparison.json",
+  "development_report_sha256": "c40696da1c37c99d0e0d7d18a4567153144a23565b83e98e9bd579418ca3ddc5",
+  "source_sha256": {
+    "strategy.py": "c953dc9fd28de893ef9027cf2ebb13a3f319069c0eade2ad8c8280a90359f2c6",
+    "local_geometry.py": "15fb21e68aa934d490f7516191457656719e9c81ce13ecd8c77c9f740f8d5aea",
+    "crossbar.py": "89765204c584b9f53936b0a7faec02b9cc67f2af51f3fc88987683ec442f3157",
+    "offline_world.py": "7d1258b083307264fbccb63f59056405d2bd422fe3356de00a321185b9290d6b",
+    "experiments.py": "0fed36981738cad03fb7cdb26dd229033f2a1e3ff7f88322f7c1e896dcb224d0",
+    "verify_components.py": "a3a9284ae2f498a3298c4b609d2cbdeaf8077bfc01d87a249363f657a9e9a148",
+    "lock_and_validate.py": "5855c9b4a9098fffc32cacaac87cea3afa6567c6120baf4a61f19f5032a06083",
+    "../../code/src/geometry.py": "72e6cb248df4bffa94538422fed6c9feee657b1062f3f7c5d4101ef46b1c7e39"
+  },
+  "validation_seed_range": [
+    928000,
+    928143
+  ],
+  "validation_case_count": 144,
+  "validation_policy": "Freeze before case generation; report all fresh outcomes, no retuning on validation."
+}
