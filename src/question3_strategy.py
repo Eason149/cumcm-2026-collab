@@ -65,6 +65,7 @@ class RobotInterface(Protocol):
 class ChannelState:
     channel: int
     observations: list[Observation] = field(default_factory=list)
+    no_signal_stations: list[Point] = field(default_factory=list)
     feasible_region: tuple[Point, ...] = ()
     cleared: bool = False
     clear_time_s: float | None = None
@@ -121,6 +122,48 @@ def survey_covering_radius_m(
     return max(inner_gap, boundary_gap)
 
 
+def _point_route_length(start: Point, route: list[Point]) -> float:
+    return sum(
+        first.distance_to(second)
+        for first, second in zip([start] + route, route)
+    )
+
+
+def _plan_point_route(start: Point, points: tuple[Point, ...]) -> list[Point]:
+    """Return a short open route through a moderate number of action points."""
+
+    if len(points) < 2:
+        return list(points)
+    best_route: list[Point] | None = None
+    best_length = float("inf")
+    for first in points:
+        remaining = [point for point in points if point is not first]
+        route = [first]
+        while remaining:
+            following = min(remaining, key=route[-1].distance_to)
+            route.append(following)
+            remaining.remove(following)
+        improved = True
+        while improved:
+            improved = False
+            for left in range(len(route) - 1):
+                for right in range(left + 1, len(route)):
+                    candidate = (
+                        route[:left]
+                        + list(reversed(route[left : right + 1]))
+                        + route[right + 1 :]
+                    )
+                    length = _point_route_length(start, candidate)
+                    if length + 1e-7 < _point_route_length(start, route):
+                        route = candidate
+                        improved = True
+        length = _point_route_length(start, route)
+        if length < best_length:
+            best_route = route
+            best_length = length
+    return best_route or []
+
+
 def _bearing_point(origin: Point, bearing_deg: float, distance_m: float) -> Point:
     angle = (bearing_deg % 360.0) * pi / 180.0
     return Point(origin.x + distance_m * cos(angle), origin.y + distance_m * sin(angle))
@@ -151,6 +194,29 @@ def robust_second_station(
             first_observation.station,
             first_observation.bearing_deg - deflection_deg,
             offset_m,
+        ),
+    )
+    return min(candidates, key=current_position.distance_to)
+
+
+def fast_second_station(
+    observation: Observation,
+    current_position: Point,
+    step_m: float = 700.0,
+    deflection_deg: float = 7.0,
+) -> Point:
+    """Choose a short, guaranteed-reception probe with useful parallax."""
+
+    candidates = (
+        _bearing_point(
+            observation.station,
+            observation.bearing_deg + deflection_deg,
+            step_m,
+        ),
+        _bearing_point(
+            observation.station,
+            observation.bearing_deg - deflection_deg,
+            step_m,
         ),
     )
     return min(candidates, key=current_position.distance_to)
@@ -318,36 +384,60 @@ def _nominal_bearing_intersection(state: ChannelState) -> Point | None:
         if not accepted:
             break
 
-    # A nominal estimate outside the deterministic feasible polygon is replaced
-    # by that polygon's centroid before it can trigger a trial clear.
+    # Use the posterior centroid inside the deterministic polygon.  Each source
+    # has one shared reception radius R ~ U[1000, 1500], so positive readings
+    # impose R >= max(d_positive) and negative readings impose
+    # R < min(d_negative).  The compatible interval length is the exact
+    # marginal reception likelihood under that rehearsal prior.  It is used
+    # only for trial clears; the deterministic feasible region remains the
+    # correctness fallback.
     if state.feasible_region:
         polygon = state.feasible_region
-        cross_products = [
-            (second.x - first.x) * (point.y - first.y)
-            - (second.y - first.y) * (point.x - first.x)
-            for first, second in zip(polygon, polygon[1:] + polygon[:1])
-        ]
-        if not (
-            all(value >= -1e-7 for value in cross_products)
-            or all(value <= 1e-7 for value in cross_products)
-        ):
-            area_twice = 0.0
-            centroid_x = 0.0
-            centroid_y = 0.0
-            for first, second in zip(polygon, polygon[1:] + polygon[:1]):
-                cross = first.x * second.y - second.x * first.y
-                area_twice += cross
-                centroid_x += (first.x + second.x) * cross
-                centroid_y += (first.y + second.y) * cross
-            if abs(area_twice) <= 1e-9:
-                return Point(
-                    sum(vertex.x for vertex in polygon) / len(polygon),
-                    sum(vertex.y for vertex in polygon) / len(polygon),
-                )
-            return Point(
-                centroid_x / (3.0 * area_twice),
-                centroid_y / (3.0 * area_twice),
+        weighted_x = weighted_y = total_weight = 0.0
+        anchor = polygon[0]
+        for second, third in zip(polygon[1:-1], polygon[2:]):
+            area = abs(
+                (second.x - anchor.x) * (third.y - anchor.y)
+                - (second.y - anchor.y) * (third.x - anchor.x)
+            ) / 2.0
+            if area <= 1e-12:
+                continue
+            samples = (
+                Point(
+                    (4.0 * anchor.x + second.x + third.x) / 6.0,
+                    (4.0 * anchor.y + second.y + third.y) / 6.0,
+                ),
+                Point(
+                    (anchor.x + 4.0 * second.x + third.x) / 6.0,
+                    (anchor.y + 4.0 * second.y + third.y) / 6.0,
+                ),
+                Point(
+                    (anchor.x + second.x + 4.0 * third.x) / 6.0,
+                    (anchor.y + second.y + 4.0 * third.y) / 6.0,
+                ),
             )
+            for sample in samples:
+                lower_radius = max(
+                    MIN_RECEPTION_RADIUS_M,
+                    *(sample.distance_to(item.station) for item in state.observations),
+                )
+                upper_radius = (
+                    min(
+                        MAX_RECEPTION_RADIUS_M,
+                        *(sample.distance_to(point) for point in state.no_signal_stations),
+                    )
+                    if state.no_signal_stations
+                    else MAX_RECEPTION_RADIUS_M
+                )
+                likelihood = max(0.0, upper_radius - lower_radius) / (
+                    MAX_RECEPTION_RADIUS_M - MIN_RECEPTION_RADIUS_M
+                )
+                weight = area * likelihood / 3.0
+                weighted_x += weight * sample.x
+                weighted_y += weight * sample.y
+                total_weight += weight
+        if total_weight > 1e-12:
+            return Point(weighted_x / total_weight, weighted_y / total_weight)
     return point
 
 
@@ -418,12 +508,16 @@ class AdaptiveOmniSearch:
         max_sources: int = 16,
         max_localization_steps: int = 12,
         speculative_clear: bool = False,
+        fast_second_step_m: float = 700.0,
+        fast_second_deflection_deg: float = 7.0,
     ) -> None:
         self.channels = tuple(channels)
         self.circle_sides = circle_sides
         self.max_sources = max_sources
         self.max_localization_steps = max_localization_steps
         self.speculative_clear = speculative_clear
+        self.fast_second_step_m = fast_second_step_m
+        self.fast_second_deflection_deg = fast_second_deflection_deg
         self.states = {channel: ChannelState(channel) for channel in self.channels}
         self.measure_count = 0
         self.clear_attempt_count = 0
@@ -489,7 +583,14 @@ class AdaptiveOmniSearch:
 
             # The feasible-region centre is a guaranteed reception point only
             # after its radius has fallen below the minimum reception radius.
-            if radius_m > MIN_RECEPTION_RADIUS_M + 1e-7:
+            if len(state.observations) == 1:
+                next_point = fast_second_station(
+                    state.observations[0],
+                    robot.position,
+                    self.fast_second_step_m,
+                    self.fast_second_deflection_deg,
+                )
+            elif radius_m > MIN_RECEPTION_RADIUS_M + 1e-7:
                 next_point = _unused_robust_station(
                     state.observations, robot.position
                 )
@@ -545,6 +646,8 @@ class AdaptiveOmniSearch:
                     self.circle_sides,
                 )
                 newly_detected.append(state)
+            else:
+                self.states[channel].no_signal_stations.append(station)
 
         # Resolve the nearest current feasible region first.
         while newly_detected:
@@ -608,8 +711,14 @@ class BatchOmniSearch(AdaptiveOmniSearch):
     """
 
     def __init__(self, *args: object, **kwargs: object) -> None:
+        self.minimum_surveys_before_enroute = int(
+            kwargs.pop("minimum_surveys_before_enroute", 1)
+        )
         self.enroute_detour_limit_m = float(
             kwargs.pop("enroute_detour_limit_m", 500.0)
+        )
+        self.nominal_enroute_detour_limit_m = float(
+            kwargs.pop("nominal_enroute_detour_limit_m", 350.0)
         )
         kwargs.setdefault("speculative_clear", True)
         super().__init__(*args, **kwargs)
@@ -651,14 +760,25 @@ class BatchOmniSearch(AdaptiveOmniSearch):
             for channel, state in self.states.items()
             if not state.cleared and len(state.observations) < 2
         ]
+        channels.sort(
+            key=lambda channel: (
+                not self.states[channel].detected,
+                channel,
+            )
+        )
         current_channel = getattr(robot, "current_channel", None)
         if current_channel in channels:
             channels.remove(current_channel)
             channels.insert(0, current_channel)
 
         for channel in channels:
-            reply = self._measure(robot, station, channel)
             state = self.states[channel]
+            found_count = sum(
+                item.detected or item.cleared for item in self.states.values()
+            )
+            if not state.detected and found_count >= self.max_sources:
+                continue
+            reply = self._measure(robot, station, channel)
             if reply.result == "near":
                 if not self._clear(robot, station, state):
                     raise RuntimeError(f"Near clear failed for channel {channel}.")
@@ -669,7 +789,35 @@ class BatchOmniSearch(AdaptiveOmniSearch):
                     float(reply.bearing_deg),
                     self.circle_sides,
                 )
+            else:
+                state.no_signal_stations.append(station)
         return sum(state.detected for state in self.states.values()) - detected_before
+
+    def _clear_nominal_en_route(
+        self, robot: RobotInterface, unvisited: list[Point]
+    ) -> None:
+        """Resolve sources whose estimate is a small detour to the next survey stop."""
+
+        while unvisited:
+            next_survey = unvisited[0]
+            direct = robot.position.distance_to(next_survey)
+            choices: list[tuple[float, ChannelState]] = []
+            for state in self.states.values():
+                if state.cleared or len(state.observations) < 2:
+                    continue
+                target = _route_target(state)
+                detour = (
+                    robot.position.distance_to(target)
+                    + target.distance_to(next_survey)
+                    - direct
+                )
+                choices.append((detour, state))
+            if not choices:
+                return
+            detour, state = min(choices, key=lambda item: (item[0], item[1].channel))
+            if detour > self.nominal_enroute_detour_limit_m:
+                return
+            self._resolve_channel(robot, state)
 
     def run(self, robot: RobotInterface) -> StrategyResult:
         if survey_covering_radius_m() > MIN_RECEPTION_RADIUS_M + 1e-9:
@@ -683,7 +831,9 @@ class BatchOmniSearch(AdaptiveOmniSearch):
         while unvisited and sum(
             state.detected or state.cleared for state in self.states.values()
         ) < self.max_sources:
-            self._clear_certified_en_route(robot, unvisited)
+            if len(visited) >= self.minimum_surveys_before_enroute:
+                self._clear_certified_en_route(robot, unvisited)
+                self._clear_nominal_en_route(robot, unvisited)
             station = unvisited.pop(0)
             self._scan_station_deferred(robot, station)
             visited.append(station)
@@ -692,7 +842,28 @@ class BatchOmniSearch(AdaptiveOmniSearch):
             state for state in self.states.values() if state.detected and not state.cleared
         ]
         while unresolved:
-            state = _plan_open_route(robot.position, unresolved)[0]
+            action_targets = [
+                (
+                    fast_second_station(
+                        state.observations[0],
+                        robot.position,
+                        self.fast_second_step_m,
+                        self.fast_second_deflection_deg,
+                    )
+                    if len(state.observations) == 1
+                    else _route_target(state),
+                    state,
+                )
+                for state in unresolved
+            ]
+            action_route = _plan_point_route(
+                robot.position,
+                tuple(point for point, _ in action_targets),
+            )
+            state = min(
+                action_targets,
+                key=lambda item: item[0].distance_to(action_route[0]),
+            )[1]
             unresolved.remove(state)
             self._resolve_channel(robot, state)
 
