@@ -42,6 +42,43 @@ PROFILE_NOTES = {
 JSON_PATH = ROOT / "results" / "tables" / "question4_model_profiles.json"
 MD_PATH = ROOT / "results" / "tables" / "question4_model_profiles.md"
 FIGURE_DIR = ROOT / "results" / "figures"
+OPTIMIZATION_STAGES = (
+    {
+        "stage": "Proof baseline\n25 lattice",
+        "profile": "certified",
+        "mean_time_per_source_s": 650.6,
+        "any_miss_risk": 0.0,
+        "note": "strict guarantee",
+    },
+    {
+        "stage": "Self-contained\n20 turbo",
+        "profile": "turbo",
+        "mean_time_per_source_s": 543.7,
+        "any_miss_risk": 0.009646,
+        "note": "pruned lattice",
+    },
+    {
+        "stage": "Extreme\n18 sprint",
+        "profile": "sprint",
+        "mean_time_per_source_s": 512.5,
+        "any_miss_risk": 0.062961,
+        "note": "too risky",
+    },
+    {
+        "stage": "Backbone21\n12 rotations",
+        "profile": "backbone21",
+        "mean_time_per_source_s": 454.0,
+        "any_miss_risk": 0.0,
+        "note": "route insertion",
+    },
+    {
+        "stage": "Backbone21\n48 rotations",
+        "profile": "backbone21",
+        "mean_time_per_source_s": 452.2,
+        "any_miss_risk": 0.0,
+        "note": "final default",
+    },
+)
 
 
 def route_length_m(profile: str) -> float:
@@ -273,6 +310,66 @@ def plot_risk_comparison(report: dict[str, object]) -> None:
     plt.close(figure)
 
 
+def plot_optimization_process(report: dict[str, object]) -> None:
+    apply_publication_style()
+    stages = list(OPTIMIZATION_STAGES)
+    x = np.arange(len(stages))
+    speed = np.array([stage["mean_time_per_source_s"] for stage in stages], dtype=float)
+    risk = np.array([max(float(stage["any_miss_risk"]), 1e-7) for stage in stages], dtype=float)
+
+    figure, (axis_speed, axis_risk) = plt.subplots(2, 1, figsize=(8.4, 5.0), sharex=True, height_ratios=(1.25, 1.0))
+    axis_speed.plot(
+        x,
+        speed,
+        color=PALETTE["teal"],
+        marker="o",
+        linewidth=2.0,
+        markersize=5.5,
+        label="mean time per source",
+    )
+    axis_speed.fill_between(x, speed, 680.0, color=PALETTE["teal"], alpha=0.10)
+    axis_speed.axhline(500.0, color=PALETTE["orange"], linestyle="--", linewidth=1.0, label="500 s/source target")
+    axis_risk.plot(
+        x,
+        risk,
+        color=PALETTE["red"],
+        marker="s",
+        linewidth=1.6,
+        markersize=4.5,
+        label="15-source any-miss risk",
+    )
+    axis_risk.set_yscale("log")
+    axis_speed.set_ylabel("Mean time per source (s)")
+    axis_risk.set_ylabel("Estimated any-miss risk\nfor 15 directional sources")
+    axis_risk.set_xticks(x, [stage["stage"] for stage in stages])
+    axis_speed.set_ylim(430, 675)
+    axis_risk.set_ylim(1e-7, 1e-1)
+    axis_speed.set_title("Question 4 optimization trajectory")
+
+    for index, stage in enumerate(stages):
+        axis_speed.text(
+            index,
+            speed[index] + (9 if index < 3 else 5),
+            f"{speed[index]:.1f}s",
+            ha="center",
+            va="bottom",
+            fontsize=7,
+        )
+        axis_speed.text(index, speed[index] - 12, stage["note"], ha="center", va="top", fontsize=6.5, color=PALETTE["gray"])
+        if float(stage["any_miss_risk"]) == 0.0:
+            axis_risk.text(index, 1.7e-7, "0 in sample", ha="center", va="bottom", fontsize=6.5, color=PALETTE["red"])
+        else:
+            axis_risk.text(index, risk[index] * 1.35, f"{risk[index]:.3g}", ha="center", va="bottom", fontsize=6.5, color=PALETTE["red"])
+
+    axis_speed.legend(loc="upper right", fontsize=7)
+    axis_risk.legend(loc="upper right", fontsize=7)
+    style_axis(axis_speed)
+    style_axis(axis_risk)
+    figure.tight_layout()
+    save_publication_figure(figure, FIGURE_DIR / "question4_optimization_process.png")
+    plt.close(figure)
+
+
 def main() -> None:
     case_count = int(sys.argv[1]) if len(sys.argv) > 1 else 30
     report = build_report(case_count=case_count)
@@ -282,6 +379,7 @@ def main() -> None:
     plot_principle_diagram(report)
     plot_speed_comparison(report)
     plot_risk_comparison(report)
+    plot_optimization_process(report)
     print(json.dumps({k: v for k, v in report.items() if k != "profiles"}, ensure_ascii=False, indent=2))
 
 
