@@ -67,7 +67,7 @@ V4_PARAMETERS: dict[str, Any] = {
     "exact_insert": True,
     "cumulative_points": 0.0,
     "cumulative_cap": 2,
-    "initial_rotation_steps": 12,
+    "initial_rotation_steps": 48,
     "initial_reflection": False,
     "initial_rotation_span": 1.5707963267948966,
 }

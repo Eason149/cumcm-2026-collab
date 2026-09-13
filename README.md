@@ -75,4 +75,4 @@ python src/question4_demo.py 30
 python src/question4_profiles.py 30
 ```
 
-问题四当前默认使用 `backbone21`：21 点覆盖骨架、精确有序插源、条件横截探针和失败清除后的区域排除；本地 30 局固定种子演练全部清除，平均总定位清除时间为 5761.0 s，平均每源 454.0 s。七档模型设置与速度/风险对比见 [results/tables/question4_model_profiles.md](results/tables/question4_model_profiles.md)，配套图见 `results/figures/question4_principle_diagram.pdf`、`question4_profile_speed.pdf`、`question4_profile_risk.pdf`。正式测试推荐默认 `backbone21`；若需要完全自包含保守兜底，可切换 `--survey-profile turbo`、`--survey-profile rapid`、`--survey-profile balanced` 或 `--survey-profile certified`。
+问题四当前默认使用 `backbone21`：21 点覆盖骨架、精确有序插源、条件横截探针和失败清除后的区域排除；本地 30 局固定种子演练全部清除，平均总定位清除时间为 5738.4 s，平均每源 452.2 s。七档模型设置与速度/风险对比见 [results/tables/question4_model_profiles.md](results/tables/question4_model_profiles.md)，配套图见 `results/figures/question4_principle_diagram.pdf`、`question4_profile_speed.pdf`、`question4_profile_risk.pdf`。正式测试推荐默认 `backbone21`；若需要完全自包含保守兜底，可切换 `--survey-profile turbo`、`--survey-profile rapid`、`--survey-profile balanced` 或 `--survey-profile certified`。

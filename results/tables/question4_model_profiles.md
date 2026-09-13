@@ -7,7 +7,7 @@
 
 | 模型 | 测站数 | 路线长度(m) | 平均总时长(s) | 平均每源(s) | 最大总时长(s) | 单定向漏检率 | 15定向任一漏检风险 | 定位 |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
-| `backbone21` | 21 | 17808.4 | 5761.0 | 454.0 | 6749.4 | 0.000000 | 0.000000 | 21-station exact-route backbone; v4 local package strategy adapter. |
+| `backbone21` | 21 | 17808.4 | 5738.4 | 452.2 | 6795.4 | 0.000000 | 0.000000 | 21-station exact-route backbone; v4 local package strategy adapter. |
 | `certified` | 25 | 24120.2 | 8230.3 | 650.6 | 9740.0 | 0.000000 | 0.000000 | 25-point triangular lattice; deterministic discovery proof. |
 | `balanced` | 23 | 20701.6 | 7440.9 | 586.1 | 8517.6 | 0.000000 | 0.000000 | 23-point robust empirical set; zero misses in the reliability sample. |
 | `rapid` | 21 | 19395.9 | 7061.1 | 556.3 | 8504.3 | 0.000584 | 0.008724 | 21-point speed/reliability compromise. |
