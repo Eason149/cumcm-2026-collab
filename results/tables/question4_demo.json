@@ -1,7 +1,7 @@
 {
   "summary": {
     "case_count": 30,
-    "survey_profile": "turbo",
+    "survey_profile": "backbone21",
     "pursuit_deflection_deg": 8.0,
     "enroute_detour_limit_m": 500.0,
     "enroute_speculative_limit_m": 400.0,
@@ -13,51 +13,57 @@
       "p95": 1.0
     },
     "completion_time_s": {
-      "mean": 6923.7357048394315,
-      "median": 6943.171910414006,
-      "minimum": 5702.962980202011,
-      "maximum": 8094.938991940759,
-      "p95": 7827.124616588631
+      "mean": 5761.01085884171,
+      "median": 5702.144772768459,
+      "minimum": 4324.024960985716,
+      "maximum": 6749.437732319298,
+      "p95": 6637.528172121089
     },
     "average_clear_time_s": {
-      "mean": 543.696855845272,
-      "median": 543.9622434713306,
-      "minimum": 356.4351862626257,
-      "maximum": 729.7436492856051,
-      "p95": 672.7627229210588
+      "mean": 454.0098237147297,
+      "median": 457.12091053034754,
+      "minimum": 270.2515600616072,
+      "maximum": 611.3161428612574,
+      "p95": 580.9420979594428
     },
     "measure_count": {
-      "mean": 258.73333333333335,
-      "median": 261.5,
-      "minimum": 172.0,
-      "maximum": 341.0,
-      "p95": 314.04999999999995
+      "mean": 240.13333333333333,
+      "median": 248.5,
+      "minimum": 149.0,
+      "maximum": 329.0,
+      "p95": 314.9
     },
     "clear_attempt_count": {
-      "mean": 19.066666666666666,
-      "median": 17.5,
-      "minimum": 10.0,
-      "maximum": 35.0,
-      "p95": 33.55
-    },
-    "survey_station_count": {
-      "mean": 19.2,
-      "median": 20.0,
+      "mean": 13.9,
+      "median": 14.0,
       "minimum": 11.0,
       "maximum": 20.0,
-      "p95": 20.0
+      "p95": 17.549999999999997
+    },
+    "survey_station_count": {
+      "mean": 21.0,
+      "median": 21.0,
+      "minimum": 21.0,
+      "maximum": 21.0,
+      "p95": 21.0
     },
     "movement_distance_m": {
-      "mean": 26544.845190863816,
-      "median": 26309.00410464149,
-      "minimum": 22809.814901010064,
-      "maximum": 32439.694959703793,
-      "p95": 29506.49935184131
+      "mean": 21341.554294208552,
+      "median": 21278.540560275353,
+      "minimum": 16780.124804928575,
+      "maximum": 26172.188661596505,
+      "p95": 24133.891491617236
     },
     "all_sources_cleared_in_every_case": true,
-    "lattice_station_count": 20,
-    "full_survey_route_m": 19170.574591047534,
+    "lattice_station_count": 21,
+    "full_survey_route_m": 17808.43161440987,
     "profile_detection_reliability": {
+      "backbone21": {
+        "station_count": 21,
+        "route_length_m": 17808.43161440987,
+        "directional_miss_rate": 0.0,
+        "estimated_all_detected_for_15_directional": 1.0
+      },
       "sprint": {
         "station_count": 18,
         "route_length_m": 17127.19322973011,
@@ -104,12 +110,12 @@
       "omnidirectional_count": 9,
       "cleared_count": 16,
       "cleared_ratio": 1.0,
-      "completion_time_s": 5919.531815276739,
-      "average_clear_time_s": 369.97073845479616,
-      "measure_count": 201,
-      "clear_attempt_count": 28,
-      "survey_station_count": 14,
-      "movement_distance_m": 23092.659076383694
+      "completion_time_s": 4993.507967074501,
+      "average_clear_time_s": 312.0942479421563,
+      "measure_count": 190,
+      "clear_attempt_count": 17,
+      "survey_station_count": 21,
+      "movement_distance_m": 18907.539835372503
     },
     {
       "seed": 1,
@@ -118,12 +124,12 @@
       "omnidirectional_count": 1,
       "cleared_count": 11,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7434.985028125661,
-      "average_clear_time_s": 675.9077298296056,
-      "measure_count": 319,
-      "clear_attempt_count": 14,
-      "survey_station_count": 20,
-      "movement_distance_m": 27384.925140628297
+      "completion_time_s": 6137.769037809218,
+      "average_clear_time_s": 557.9790034372016,
+      "measure_count": 305,
+      "clear_attempt_count": 11,
+      "survey_station_count": 21,
+      "movement_distance_m": 21323.845189046086
     },
     {
       "seed": 2,
@@ -132,12 +138,12 @@
       "omnidirectional_count": 2,
       "cleared_count": 16,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7582.61230757938,
-      "average_clear_time_s": 473.91326922371127,
-      "measure_count": 285,
-      "clear_attempt_count": 34,
-      "survey_station_count": 17,
-      "movement_distance_m": 28838.061537896905
+      "completion_time_s": 6141.757866327748,
+      "average_clear_time_s": 383.85986664548426,
+      "measure_count": 240,
+      "clear_attempt_count": 18,
+      "survey_station_count": 21,
+      "movement_distance_m": 23203.78933163874
     },
     {
       "seed": 3,
@@ -146,12 +152,12 @@
       "omnidirectional_count": 1,
       "cleared_count": 11,
       "cleared_ratio": 1.0,
-      "completion_time_s": 8027.180142141657,
-      "average_clear_time_s": 729.7436492856051,
-      "measure_count": 341,
-      "clear_attempt_count": 24,
-      "survey_station_count": 20,
-      "movement_distance_m": 29570.90071070827
+      "completion_time_s": 6724.477571473831,
+      "average_clear_time_s": 611.3161428612574,
+      "measure_count": 323,
+      "clear_attempt_count": 13,
+      "survey_station_count": 21,
+      "movement_distance_m": 23722.387857369155
     },
     {
       "seed": 4,
@@ -160,12 +166,12 @@
       "omnidirectional_count": 6,
       "cleared_count": 11,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6872.889412034689,
-      "average_clear_time_s": 624.8081283667899,
+      "completion_time_s": 5948.647186300923,
+      "average_clear_time_s": 540.7861078455385,
       "measure_count": 277,
-      "clear_attempt_count": 16,
-      "survey_station_count": 20,
-      "movement_distance_m": 25819.447060173436
+      "clear_attempt_count": 12,
+      "survey_station_count": 21,
+      "movement_distance_m": 21233.23593150462
     },
     {
       "seed": 5,
@@ -174,12 +180,12 @@
       "omnidirectional_count": 9,
       "cleared_count": 14,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7365.842254735538,
-      "average_clear_time_s": 526.131589623967,
-      "measure_count": 244,
-      "clear_attempt_count": 22,
-      "survey_station_count": 20,
-      "movement_distance_m": 29149.21127367767
+      "completion_time_s": 5499.243270216742,
+      "average_clear_time_s": 392.80309072976723,
+      "measure_count": 208,
+      "clear_attempt_count": 15,
+      "survey_station_count": 21,
+      "movement_distance_m": 20936.216351083713
     },
     {
       "seed": 6,
@@ -188,12 +194,12 @@
       "omnidirectional_count": 6,
       "cleared_count": 16,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6233.848286983727,
-      "average_clear_time_s": 389.61551793648295,
-      "measure_count": 185,
-      "clear_attempt_count": 35,
-      "survey_station_count": 14,
-      "movement_distance_m": 25044.241434918637
+      "completion_time_s": 4324.024960985716,
+      "average_clear_time_s": 270.2515600616072,
+      "measure_count": 149,
+      "clear_attempt_count": 20,
+      "survey_station_count": 21,
+      "movement_distance_m": 16780.124804928575
     },
     {
       "seed": 7,
@@ -202,12 +208,12 @@
       "omnidirectional_count": 9,
       "cleared_count": 12,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6882.997060329001,
-      "average_clear_time_s": 573.5830883607501,
+      "completion_time_s": 5571.351666872903,
+      "average_clear_time_s": 464.27930557274186,
       "measure_count": 258,
-      "clear_attempt_count": 14,
-      "survey_station_count": 20,
-      "movement_distance_m": 26439.985301645
+      "clear_attempt_count": 12,
+      "survey_station_count": 21,
+      "movement_distance_m": 19886.758334364506
     },
     {
       "seed": 8,
@@ -216,12 +222,12 @@
       "omnidirectional_count": 5,
       "cleared_count": 11,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6726.548602093595,
-      "average_clear_time_s": 611.504418372145,
-      "measure_count": 255,
-      "clear_attempt_count": 18,
-      "survey_station_count": 20,
-      "movement_distance_m": 25702.74301046797
+      "completion_time_s": 5724.108877489299,
+      "average_clear_time_s": 520.373534317209,
+      "measure_count": 261,
+      "clear_attempt_count": 14,
+      "survey_station_count": 21,
+      "movement_distance_m": 20580.544387446495
     },
     {
       "seed": 9,
@@ -230,12 +236,12 @@
       "omnidirectional_count": 3,
       "cleared_count": 13,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7003.34676049901,
-      "average_clear_time_s": 538.7189815768469,
-      "measure_count": 233,
-      "clear_attempt_count": 15,
-      "survey_station_count": 20,
-      "movement_distance_m": 27766.73380249504
+      "completion_time_s": 6079.7297797407755,
+      "average_clear_time_s": 467.6715215185212,
+      "measure_count": 251,
+      "clear_attempt_count": 13,
+      "survey_station_count": 21,
+      "movement_distance_m": 22618.648898703872
     },
     {
       "seed": 10,
@@ -244,12 +250,12 @@
       "omnidirectional_count": 13,
       "cleared_count": 14,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6175.914690305739,
-      "average_clear_time_s": 441.13676359326706,
-      "measure_count": 223,
-      "clear_attempt_count": 17,
-      "survey_station_count": 20,
-      "movement_distance_m": 23889.573451528686
+      "completion_time_s": 5418.562668662465,
+      "average_clear_time_s": 387.0401906187475,
+      "measure_count": 192,
+      "clear_attempt_count": 15,
+      "survey_station_count": 21,
+      "movement_distance_m": 21042.813343312333
     },
     {
       "seed": 11,
@@ -258,12 +264,12 @@
       "omnidirectional_count": 4,
       "cleared_count": 13,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7348.359457208395,
-      "average_clear_time_s": 565.2584197852611,
-      "measure_count": 295,
-      "clear_attempt_count": 19,
-      "survey_station_count": 20,
-      "movement_distance_m": 27581.79728604196
+      "completion_time_s": 6531.256684023294,
+      "average_clear_time_s": 502.40436030948416,
+      "measure_count": 269,
+      "clear_attempt_count": 14,
+      "survey_station_count": 21,
+      "movement_distance_m": 24336.28342011647
     },
     {
       "seed": 12,
@@ -272,12 +278,12 @@
       "omnidirectional_count": 8,
       "cleared_count": 13,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7127.40453723927,
-      "average_clear_time_s": 548.2618874799439,
-      "measure_count": 242,
-      "clear_attempt_count": 19,
-      "survey_station_count": 20,
-      "movement_distance_m": 28057.02268619633
+      "completion_time_s": 5733.398697553471,
+      "average_clear_time_s": 441.0306690425747,
+      "measure_count": 234,
+      "clear_attempt_count": 14,
+      "survey_station_count": 21,
+      "movement_distance_m": 21421.993487767355
     },
     {
       "seed": 13,
@@ -286,12 +292,12 @@
       "omnidirectional_count": 7,
       "cleared_count": 12,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7043.192731372922,
-      "average_clear_time_s": 586.9327276144102,
-      "measure_count": 308,
-      "clear_attempt_count": 17,
-      "survey_station_count": 20,
-      "movement_distance_m": 25705.963656864606
+      "completion_time_s": 5924.113653093291,
+      "average_clear_time_s": 493.67613775777426,
+      "measure_count": 251,
+      "clear_attempt_count": 12,
+      "survey_station_count": 21,
+      "movement_distance_m": 21885.56826546646
     },
     {
       "seed": 14,
@@ -300,12 +306,12 @@
       "omnidirectional_count": 1,
       "cleared_count": 10,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6689.1882558839025,
-      "average_clear_time_s": 668.9188255883903,
-      "measure_count": 289,
-      "clear_attempt_count": 10,
-      "survey_station_count": 20,
-      "movement_distance_m": 24620.941279419498
+      "completion_time_s": 5968.335708965742,
+      "average_clear_time_s": 596.8335708965742,
+      "measure_count": 329,
+      "clear_attempt_count": 11,
+      "survey_station_count": 21,
+      "movement_distance_m": 19796.678544828697
     },
     {
       "seed": 15,
@@ -314,12 +320,12 @@
       "omnidirectional_count": 10,
       "cleared_count": 11,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6787.699154061902,
-      "average_clear_time_s": 617.0635594601729,
-      "measure_count": 287,
-      "clear_attempt_count": 13,
-      "survey_station_count": 20,
-      "movement_distance_m": 25108.4957703095
+      "completion_time_s": 5590.300749936158,
+      "average_clear_time_s": 508.2091590851053,
+      "measure_count": 257,
+      "clear_attempt_count": 11,
+      "survey_station_count": 21,
+      "movement_distance_m": 20051.503749680796
     },
     {
       "seed": 16,
@@ -328,12 +334,12 @@
       "omnidirectional_count": 4,
       "cleared_count": 12,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7565.152132542192,
-      "average_clear_time_s": 630.429344378516,
-      "measure_count": 302,
-      "clear_attempt_count": 21,
-      "survey_station_count": 20,
-      "movement_distance_m": 28430.76066271096
+      "completion_time_s": 5980.76791192701,
+      "average_clear_time_s": 498.3973259939175,
+      "measure_count": 258,
+      "clear_attempt_count": 12,
+      "survey_station_count": 21,
+      "movement_distance_m": 21903.839559635046
     },
     {
       "seed": 17,
@@ -342,12 +348,12 @@
       "omnidirectional_count": 7,
       "cleared_count": 14,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7155.310687446072,
-      "average_clear_time_s": 511.09362053186226,
-      "measure_count": 262,
-      "clear_attempt_count": 20,
-      "survey_station_count": 20,
-      "movement_distance_m": 27586.553437230355
+      "completion_time_s": 5567.993360060503,
+      "average_clear_time_s": 397.71381143289307,
+      "measure_count": 213,
+      "clear_attempt_count": 16,
+      "survey_station_count": 21,
+      "movement_distance_m": 21144.966800302518
     },
     {
       "seed": 18,
@@ -356,12 +362,12 @@
       "omnidirectional_count": 9,
       "cleared_count": 11,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6535.378126492374,
-      "average_clear_time_s": 594.1252842265794,
-      "measure_count": 269,
+      "completion_time_s": 5652.215243005137,
+      "average_clear_time_s": 513.8377493641034,
+      "measure_count": 262,
       "clear_attempt_count": 12,
-      "survey_station_count": 20,
-      "movement_distance_m": 24406.890632461855
+      "survey_station_count": 21,
+      "movement_distance_m": 20176.07621502568
     },
     {
       "seed": 19,
@@ -370,12 +376,12 @@
       "omnidirectional_count": 14,
       "cleared_count": 15,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6356.885339378322,
-      "average_clear_time_s": 423.7923559585548,
-      "measure_count": 207,
-      "clear_attempt_count": 17,
-      "survey_station_count": 20,
-      "movement_distance_m": 25259.426696891605
+      "completion_time_s": 5242.018200417155,
+      "average_clear_time_s": 349.46788002781034,
+      "measure_count": 187,
+      "clear_attempt_count": 15,
+      "survey_station_count": 21,
+      "movement_distance_m": 20280.091002085774
     },
     {
       "seed": 20,
@@ -384,12 +390,12 @@
       "omnidirectional_count": 4,
       "cleared_count": 15,
       "cleared_ratio": 1.0,
-      "completion_time_s": 8094.938991940759,
-      "average_clear_time_s": 539.6625994627173,
-      "measure_count": 256,
-      "clear_attempt_count": 21,
-      "survey_station_count": 20,
-      "movement_distance_m": 32439.694959703793
+      "completion_time_s": 6749.437732319298,
+      "average_clear_time_s": 449.9625154879532,
+      "measure_count": 246,
+      "clear_attempt_count": 15,
+      "survey_station_count": 21,
+      "movement_distance_m": 26172.188661596505
     },
     {
       "seed": 21,
@@ -398,12 +404,12 @@
       "omnidirectional_count": 4,
       "cleared_count": 11,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7123.230032395093,
-      "average_clear_time_s": 647.5663665813721,
-      "measure_count": 289,
-      "clear_attempt_count": 14,
-      "survey_station_count": 20,
-      "movement_distance_m": 26731.150161975456
+      "completion_time_s": 6115.237540975166,
+      "average_clear_time_s": 555.9306855431969,
+      "measure_count": 285,
+      "clear_attempt_count": 11,
+      "survey_station_count": 21,
+      "movement_distance_m": 21816.187704875825
     },
     {
       "seed": 22,
@@ -412,12 +418,12 @@
       "omnidirectional_count": 7,
       "cleared_count": 11,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6359.252480581244,
-      "average_clear_time_s": 578.1138618710221,
-      "measure_count": 268,
+      "completion_time_s": 5670.0819056503515,
+      "average_clear_time_s": 515.4619914227592,
+      "measure_count": 265,
       "clear_attempt_count": 11,
-      "survey_station_count": 20,
-      "movement_distance_m": 23581.26240290621
+      "survey_station_count": 21,
+      "movement_distance_m": 20195.40952825176
     },
     {
       "seed": 23,
@@ -426,12 +432,12 @@
       "omnidirectional_count": 11,
       "cleared_count": 16,
       "cleared_ratio": 1.0,
-      "completion_time_s": 5702.962980202011,
-      "average_clear_time_s": 356.4351862626257,
-      "measure_count": 172,
-      "clear_attempt_count": 33,
-      "survey_station_count": 11,
-      "movement_distance_m": 22809.814901010064
+      "completion_time_s": 4912.928286533819,
+      "average_clear_time_s": 307.0580179083637,
+      "measure_count": 158,
+      "clear_attempt_count": 16,
+      "survey_station_count": 21,
+      "movement_distance_m": 19489.641432669105
     },
     {
       "seed": 24,
@@ -440,12 +446,12 @@
       "omnidirectional_count": 8,
       "cleared_count": 15,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6863.604581527598,
-      "average_clear_time_s": 457.57363876850656,
-      "measure_count": 262,
-      "clear_attempt_count": 15,
-      "survey_station_count": 20,
-      "movement_distance_m": 26178.022907637987
+      "completion_time_s": 5672.8504700606045,
+      "average_clear_time_s": 378.1900313373736,
+      "measure_count": 219,
+      "clear_attempt_count": 16,
+      "survey_station_count": 21,
+      "movement_distance_m": 21469.252350303028
     },
     {
       "seed": 25,
@@ -454,12 +460,12 @@
       "omnidirectional_count": 12,
       "cleared_count": 13,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6378.3489672654505,
-      "average_clear_time_s": 490.6422282511885,
-      "measure_count": 207,
-      "clear_attempt_count": 15,
-      "survey_station_count": 20,
-      "movement_distance_m": 25431.744836327252
+      "completion_time_s": 5680.180668047619,
+      "average_clear_time_s": 436.9369744652015,
+      "measure_count": 212,
+      "clear_attempt_count": 13,
+      "survey_station_count": 21,
+      "movement_distance_m": 21785.903340238096
     },
     {
       "seed": 26,
@@ -468,12 +474,12 @@
       "omnidirectional_count": 11,
       "cleared_count": 15,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7315.777349795343,
-      "average_clear_time_s": 487.7184899863562,
-      "measure_count": 240,
-      "clear_attempt_count": 22,
-      "survey_station_count": 20,
-      "movement_distance_m": 29018.88674897671
+      "completion_time_s": 5658.123414157219,
+      "average_clear_time_s": 377.20822761048123,
+      "measure_count": 207,
+      "clear_attempt_count": 15,
+      "survey_station_count": 21,
+      "movement_distance_m": 21755.617070786087
     },
     {
       "seed": 27,
@@ -482,12 +488,12 @@
       "omnidirectional_count": 7,
       "cleared_count": 15,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7522.5573159785645,
-      "average_clear_time_s": 501.5038210652376,
-      "measure_count": 261,
-      "clear_attempt_count": 21,
-      "survey_station_count": 20,
-      "movement_distance_m": 29427.786579892803
+      "completion_time_s": 6160.304715801414,
+      "average_clear_time_s": 410.6869810534276,
+      "measure_count": 220,
+      "clear_attempt_count": 16,
+      "survey_station_count": 21,
+      "movement_distance_m": 23886.523579007062
     },
     {
       "seed": 28,
@@ -496,12 +502,12 @@
       "omnidirectional_count": 7,
       "cleared_count": 10,
       "cleared_ratio": 1.0,
-      "completion_time_s": 6484.456261734641,
-      "average_clear_time_s": 648.4456261734641,
-      "measure_count": 268,
-      "clear_attempt_count": 15,
-      "survey_station_count": 20,
-      "movement_distance_m": 24157.28130867319
+      "completion_time_s": 5615.191865918379,
+      "average_clear_time_s": 561.519186591838,
+      "measure_count": 266,
+      "clear_attempt_count": 11,
+      "survey_station_count": 21,
+      "movement_distance_m": 19910.9593295919
     },
     {
       "seed": 29,
@@ -510,12 +516,12 @@
       "omnidirectional_count": 12,
       "cleared_count": 14,
       "cleared_ratio": 1.0,
-      "completion_time_s": 7032.675402032139,
-      "average_clear_time_s": 502.3339572880099,
-      "measure_count": 257,
-      "clear_attempt_count": 20,
-      "survey_station_count": 20,
-      "movement_distance_m": 27113.377010160697
+      "completion_time_s": 5842.408103851573,
+      "average_clear_time_s": 417.31486456082666,
+      "measure_count": 212,
+      "clear_attempt_count": 16,
+      "survey_station_count": 21,
+      "movement_distance_m": 22532.040519257862
     }
   ]
 }

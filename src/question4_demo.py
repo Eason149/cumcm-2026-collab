@@ -19,6 +19,7 @@ from matplotlib.patches import Circle as CirclePatch
 
 from plot_style import PALETTE, apply_publication_style, save_publication_figure, style_axis
 from question1_geometry import Point
+from question4_backbone21 import backbone21_stations, run_backbone21
 from question4_simulator import LocalMixedSimulator, random_case
 from question4_strategy import (
     MixedDirectionalSearch,
@@ -32,7 +33,8 @@ from question4_strategy import (
 TABLE_PATH = ROOT / "results" / "tables" / "question4_demo.json"
 SUMMARY_PATH = ROOT / "results" / "tables" / "question4_summary.md"
 FIGURE_DIR = ROOT / "results" / "figures"
-SURVEY_PROFILE = "turbo"
+SURVEY_PROFILE = "backbone21"
+PROFILE_ORDER = ("backbone21", "sprint", "fast", "turbo", "rapid", "balanced", "certified")
 PURSUIT_DEFLECTION_DEG = 8.0
 ENROUTE_DETOUR_LIMIT_M = 500.0
 ENROUTE_SPECULATIVE_LIMIT_M = 400.0
@@ -44,13 +46,16 @@ def run_cases(case_count: int = 30) -> tuple[list[dict[str, object]], LocalMixed
     for seed in range(case_count):
         sources = random_case(seed)
         simulator = LocalMixedSimulator(sources, seed=10_000 + seed)
-        result = MixedDirectionalSearch(
-            circle_sides=120,
-            survey_profile=SURVEY_PROFILE,
-            pursuit_deflection_deg=PURSUIT_DEFLECTION_DEG,
-            enroute_detour_limit_m=ENROUTE_DETOUR_LIMIT_M,
-            enroute_speculative_limit_m=ENROUTE_SPECULATIVE_LIMIT_M,
-        ).run(simulator)
+        if SURVEY_PROFILE == "backbone21":
+            result = run_backbone21(simulator)
+        else:
+            result = MixedDirectionalSearch(
+                circle_sides=120,
+                survey_profile=SURVEY_PROFILE,
+                pursuit_deflection_deg=PURSUIT_DEFLECTION_DEG,
+                enroute_detour_limit_m=ENROUTE_DETOUR_LIMIT_M,
+                enroute_speculative_limit_m=ENROUTE_SPECULATIVE_LIMIT_M,
+            ).run(simulator)
         actual = len(sources)
         directional = sum(source.is_directional for source in sources)
         movement_distance_m = 5.0 * sum(float(action["movement_s"]) for action in simulator.actions)
@@ -89,8 +94,8 @@ def estimate_profile_reliability(sample_count: int = 1_000_000) -> dict[str, obj
     ux, uy = np.cos(direction), np.sin(direction)
     reception_radius = rng.uniform(1000.0, 1500.0, sample_count)
     results: dict[str, object] = {}
-    for profile in ("sprint", "fast", "turbo", "rapid", "balanced", "certified"):
-        stations = survey_stations_for_profile(profile)
+    for profile in PROFILE_ORDER:
+        stations = backbone21_stations() if profile == "backbone21" else survey_stations_for_profile(profile)
         detected = np.zeros(sample_count, dtype=bool)
         for station in stations:
             detected |= (
@@ -141,7 +146,7 @@ def summarize(records: list[dict[str, object]]) -> dict[str, object]:
     summary["all_sources_cleared_in_every_case"] = all(
         record["cleared_count"] == record["source_count"] for record in records
     )
-    active_stations = survey_stations_for_profile(SURVEY_PROFILE)
+    active_stations = backbone21_stations() if SURVEY_PROFILE == "backbone21" else survey_stations_for_profile(SURVEY_PROFILE)
     summary["lattice_station_count"] = len(active_stations)
     route = plan_station_route(active_stations)
     summary["full_survey_route_m"] = sum(
@@ -174,14 +179,14 @@ def write_summary_markdown(summary: dict[str, object]) -> None:
     lines.extend(
         (
             "",
-            f"三角格点共 {summary['lattice_station_count']} 个；完整巡检开放路径长 "
+            f"公共巡检点共 {summary['lattice_station_count']} 个；完整巡检开放路径长 "
             f"{float(summary['full_survey_route_m']):.1f} m。",
             "",
             "| 巡检模式 | 测站数 | 路线长度（m） | 单个定向源估计漏检率 | 15 个定向源全部发现估计概率 |",
             "|---|---:|---:|---:|---:|",
         )
     )
-    for profile in ("sprint", "fast", "turbo", "rapid", "balanced", "certified"):
+    for profile in PROFILE_ORDER:
         values = summary["profile_detection_reliability"][profile]
         lines.append(
             f"| {profile} | {values['station_count']} | "
@@ -197,7 +202,7 @@ def plot_lattice() -> None:
     figure, axis = plt.subplots(figsize=(5.3, 5.0))
     axis.add_patch(CirclePatch((0.0, 0.0), TARGET_RADIUS_M, fill=False, color=PALETTE["ink"], linewidth=1.4))
     all_stations = triangular_lattice_stations()
-    active_stations = survey_stations_for_profile(SURVEY_PROFILE)
+    active_stations = backbone21_stations() if SURVEY_PROFILE == "backbone21" else survey_stations_for_profile(SURVEY_PROFILE)
     route = plan_station_route(active_stations)
     route_x = [0.0] + [point.x for point in route]
     route_y = [0.0] + [point.y for point in route]

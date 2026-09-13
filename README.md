@@ -75,4 +75,4 @@ python src/question4_demo.py 30
 python src/question4_profiles.py 30
 ```
 
-问题四当前默认使用 `turbo` 20 点巡检、扇形中心探针和 8° 双侧追踪；本地 30 局固定种子演练全部清除，平均总定位清除时间为 6923.7 s，平均每源 543.7 s。六档模型设置与速度/风险对比见 [results/tables/question4_model_profiles.md](results/tables/question4_model_profiles.md)，配套图见 `results/figures/question4_principle_diagram.pdf`、`question4_profile_speed.pdf`、`question4_profile_risk.pdf`。正式测试推荐默认 `turbo`；若需要更稳健或更强几何证明，可在正式客户端中切换 `--survey-profile rapid`、`--survey-profile balanced` 或 `--survey-profile certified`。`sprint` 最快，平均每源 512.5 s，但估计风险偏高，仅建议演练对照或冲分测试。
+问题四当前默认使用 `backbone21`：21 点覆盖骨架、精确有序插源、条件横截探针和失败清除后的区域排除；本地 30 局固定种子演练全部清除，平均总定位清除时间为 5761.0 s，平均每源 454.0 s。七档模型设置与速度/风险对比见 [results/tables/question4_model_profiles.md](results/tables/question4_model_profiles.md)，配套图见 `results/figures/question4_principle_diagram.pdf`、`question4_profile_speed.pdf`、`question4_profile_risk.pdf`。正式测试推荐默认 `backbone21`；若需要完全自包含保守兜底，可切换 `--survey-profile turbo`、`--survey-profile rapid`、`--survey-profile balanced` 或 `--survey-profile certified`。

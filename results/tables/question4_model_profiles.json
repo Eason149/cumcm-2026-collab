@@ -1,8 +1,296 @@
 {
   "case_count": 30,
   "risk_samples": 500000,
-  "recommended_formal_profile": "turbo",
+  "recommended_formal_profile": "backbone21",
   "profiles": {
+    "backbone21": {
+      "station_count": 21,
+      "route_length_m": 17808.43161440987,
+      "note": "21-station exact-route backbone; v4 local package strategy adapter.",
+      "directional_miss_rate": 0.0,
+      "estimated_all_detected_for_15_directional": 1.0,
+      "estimated_any_miss_for_15_directional": 0.0,
+      "records": [
+        {
+          "seed": 0,
+          "source_count": 16,
+          "completion_time_s": 4993.507967074501,
+          "average_clear_time_s": 312.0942479421563,
+          "measure_count": 190,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 1,
+          "source_count": 11,
+          "completion_time_s": 6137.769037809218,
+          "average_clear_time_s": 557.9790034372016,
+          "measure_count": 305,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 2,
+          "source_count": 16,
+          "completion_time_s": 6141.757866327748,
+          "average_clear_time_s": 383.85986664548426,
+          "measure_count": 240,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 3,
+          "source_count": 11,
+          "completion_time_s": 6724.477571473831,
+          "average_clear_time_s": 611.3161428612574,
+          "measure_count": 323,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 4,
+          "source_count": 11,
+          "completion_time_s": 5948.647186300923,
+          "average_clear_time_s": 540.7861078455385,
+          "measure_count": 277,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 5,
+          "source_count": 14,
+          "completion_time_s": 5499.243270216742,
+          "average_clear_time_s": 392.80309072976723,
+          "measure_count": 208,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 6,
+          "source_count": 16,
+          "completion_time_s": 4324.024960985716,
+          "average_clear_time_s": 270.2515600616072,
+          "measure_count": 149,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 7,
+          "source_count": 12,
+          "completion_time_s": 5571.351666872903,
+          "average_clear_time_s": 464.27930557274186,
+          "measure_count": 258,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 8,
+          "source_count": 11,
+          "completion_time_s": 5724.108877489299,
+          "average_clear_time_s": 520.373534317209,
+          "measure_count": 261,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 9,
+          "source_count": 13,
+          "completion_time_s": 6079.7297797407755,
+          "average_clear_time_s": 467.6715215185212,
+          "measure_count": 251,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 10,
+          "source_count": 14,
+          "completion_time_s": 5418.562668662465,
+          "average_clear_time_s": 387.0401906187475,
+          "measure_count": 192,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 11,
+          "source_count": 13,
+          "completion_time_s": 6531.256684023294,
+          "average_clear_time_s": 502.40436030948416,
+          "measure_count": 269,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 12,
+          "source_count": 13,
+          "completion_time_s": 5733.398697553471,
+          "average_clear_time_s": 441.0306690425747,
+          "measure_count": 234,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 13,
+          "source_count": 12,
+          "completion_time_s": 5924.113653093291,
+          "average_clear_time_s": 493.67613775777426,
+          "measure_count": 251,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 14,
+          "source_count": 10,
+          "completion_time_s": 5968.335708965742,
+          "average_clear_time_s": 596.8335708965742,
+          "measure_count": 329,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 15,
+          "source_count": 11,
+          "completion_time_s": 5590.300749936158,
+          "average_clear_time_s": 508.2091590851053,
+          "measure_count": 257,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 16,
+          "source_count": 12,
+          "completion_time_s": 5980.76791192701,
+          "average_clear_time_s": 498.3973259939175,
+          "measure_count": 258,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 17,
+          "source_count": 14,
+          "completion_time_s": 5567.993360060503,
+          "average_clear_time_s": 397.71381143289307,
+          "measure_count": 213,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 18,
+          "source_count": 11,
+          "completion_time_s": 5652.215243005137,
+          "average_clear_time_s": 513.8377493641034,
+          "measure_count": 262,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 19,
+          "source_count": 15,
+          "completion_time_s": 5242.018200417155,
+          "average_clear_time_s": 349.46788002781034,
+          "measure_count": 187,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 20,
+          "source_count": 15,
+          "completion_time_s": 6749.437732319298,
+          "average_clear_time_s": 449.9625154879532,
+          "measure_count": 246,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 21,
+          "source_count": 11,
+          "completion_time_s": 6115.237540975166,
+          "average_clear_time_s": 555.9306855431969,
+          "measure_count": 285,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 22,
+          "source_count": 11,
+          "completion_time_s": 5670.0819056503515,
+          "average_clear_time_s": 515.4619914227592,
+          "measure_count": 265,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 23,
+          "source_count": 16,
+          "completion_time_s": 4912.928286533819,
+          "average_clear_time_s": 307.0580179083637,
+          "measure_count": 158,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 24,
+          "source_count": 15,
+          "completion_time_s": 5672.8504700606045,
+          "average_clear_time_s": 378.1900313373736,
+          "measure_count": 219,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 25,
+          "source_count": 13,
+          "completion_time_s": 5680.180668047619,
+          "average_clear_time_s": 436.9369744652015,
+          "measure_count": 212,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 26,
+          "source_count": 15,
+          "completion_time_s": 5658.123414157219,
+          "average_clear_time_s": 377.20822761048123,
+          "measure_count": 207,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 27,
+          "source_count": 15,
+          "completion_time_s": 6160.304715801414,
+          "average_clear_time_s": 410.6869810534276,
+          "measure_count": 220,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 28,
+          "source_count": 10,
+          "completion_time_s": 5615.191865918379,
+          "average_clear_time_s": 561.519186591838,
+          "measure_count": 266,
+          "survey_station_count": 21,
+          "all_cleared": true
+        },
+        {
+          "seed": 29,
+          "source_count": 14,
+          "completion_time_s": 5842.408103851573,
+          "average_clear_time_s": 417.31486456082666,
+          "measure_count": 212,
+          "survey_station_count": 21,
+          "all_cleared": true
+        }
+      ],
+      "mean_total_time_s": 5761.01085884171,
+      "median_total_time_s": 5702.144772768459,
+      "max_total_time_s": 6749.437732319298,
+      "mean_time_per_source_s": 454.0098237147297,
+      "median_time_per_source_s": 457.12091053034754,
+      "mean_measure_count": 240.13333333333333,
+      "mean_visited_stations": 21.0,
+      "all_cases_cleared": true
+    },
     "certified": {
       "station_count": 25,
       "route_length_m": 24120.193229730106,

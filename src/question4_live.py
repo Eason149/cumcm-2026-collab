@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from question3_live import OfficialSimulatorClient
+from question4_backbone21 import run_backbone21
 from question4_strategy import MixedDirectionalSearch
 
 
@@ -27,8 +28,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log", type=Path)
     parser.add_argument(
         "--survey-profile",
-        choices=("sprint", "fast", "turbo", "rapid", "balanced", "certified"),
-        default="turbo",
+        choices=("backbone21", "sprint", "fast", "turbo", "rapid", "balanced", "certified"),
+        default="backbone21",
         help="Speed/reliability tradeoff; certified retains the 25-point proof.",
     )
     return parser.parse_args()
@@ -47,7 +48,11 @@ def main() -> None:
         remaining = client.enter()
         if remaining < 60:
             raise RuntimeError(f"Only {remaining} real seconds remain; aborting safely.")
-        result = MixedDirectionalSearch(survey_profile=args.survey_profile).run(client)
+        result = (
+            run_backbone21(client)
+            if args.survey_profile == "backbone21"
+            else MixedDirectionalSearch(survey_profile=args.survey_profile).run(client)
+        )
         client.exit()
         output = asdict(result)
         output["client_log"] = str(log_path)
